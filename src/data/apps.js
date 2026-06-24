@@ -19,14 +19,4 @@ export const apps = [
     tags: ["건강", "우리 몸", "생활습관"],
     url: "https://example.com",
   },
-  {
-    id: "math-practice",
-    title: "수학 연습 놀이터",
-    description:
-      "기초 연산 문제를 가볍게 풀어보며 계산 감각을 다지는 연습용 웹앱입니다.",
-    subject: "수학",
-    grade: "공통",
-    tags: ["연산", "반복학습", "자기주도"],
-    url: "",
-  },
 ];
