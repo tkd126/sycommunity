@@ -1,5 +1,15 @@
 export const apps = [
   {
+    id: "space-simulation",
+    title: "우주 시뮬레이션",
+    description:
+      "태양계 천체의 움직임을 관찰하며 행성과 우주 공간의 특징을 탐구하는 과학 웹앱입니다.",
+    subject: "과학",
+    grade: "5학년",
+    tags: ["우주", "태양계", "행성", "시뮬레이션"],
+    url: "https://singular-mochi-6a7413.netlify.app/",
+  },
+  {
     id: "population-map",
     title: "인구분포 탐구 앱",
     description:
