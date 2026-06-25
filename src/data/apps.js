@@ -10,16 +10,6 @@ export const apps = [
     url: "https://singular-mochi-6a7413.netlify.app/",
   },
   {
-    id: "population-map",
-    title: "인구분포 탐구 앱",
-    description:
-      "우리나라 지역별 인구 분포를 살펴보며 수도권 집중과 지역 불균형을 탐구하는 웹앱입니다.",
-    subject: "사회",
-    grade: "5학년",
-    tags: ["인구분포", "지역불균형", "자료해석"],
-    url: "https://example.com",
-  },
-  {
     id: "history-map-census",
     title: "인구 분포 지도 탐구",
     description:
