@@ -20,6 +20,16 @@ export const apps = [
     url: "https://example.com",
   },
   {
+    id: "history-map-census",
+    title: "인구 분포 지도 탐구",
+    description:
+      "우리나라 인구 분포를 지도와 자료로 살펴보며 지역별 특징과 인구 이동을 탐구하는 사회 웹앱입니다.",
+    subject: "사회",
+    grade: "5학년",
+    tags: ["인구분포", "지도", "자료해석", "사회"],
+    url: "https://history-map-census.lovable.app",
+  },
+  {
     id: "health-plan",
     title: "건강 계획표 앱",
     description:
