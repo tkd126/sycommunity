@@ -8,6 +8,7 @@ export const apps = [
     grade: "5학년",
     tags: ["우주", "태양계", "행성", "시뮬레이션"],
     url: "https://singular-mochi-6a7413.netlify.app/",
+    thumbnail: "/thumbnails/space-simulation.png",
   },
   {
     id: "history-map-census",
@@ -18,6 +19,7 @@ export const apps = [
     grade: "5학년",
     tags: ["인구분포", "지도", "자료해석", "사회"],
     url: "https://history-map-census.lovable.app",
+    thumbnail: "/thumbnails/history-map-census.png",
   },
   {
     id: "health-plan",

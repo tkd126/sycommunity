@@ -4,6 +4,7 @@ import { apps } from "../data/apps.js";
 
 export default function Home({ onNavigate }) {
   const recentApps = apps.slice(0, 3);
+  const featuredApp = apps.find((app) => app.url && !app.url.includes("example.com"));
 
   return (
     <>
@@ -28,10 +29,21 @@ export default function Home({ onNavigate }) {
             </button>
           </div>
 
-          <div className="hero-panel" aria-label="자료실 요약">
-            <strong>{apps.length}</strong>
-            <span>등록된 수업 앱</span>
-            <p>필요한 자료를 차곡차곡 모아가는 개인 수업 도구함입니다.</p>
+          <div className="hero-showcase" aria-label="대표 앱 미리보기">
+            {featuredApp?.thumbnail ? (
+              <img src={featuredApp.thumbnail} alt="" />
+            ) : featuredApp ? (
+              <iframe
+                src={featuredApp.url}
+                title={`${featuredApp.title} 미리보기`}
+                loading="lazy"
+                tabIndex="-1"
+              />
+            ) : null}
+            <div className="showcase-caption">
+              <span>{apps.length}개 수업 앱</span>
+              <strong>{featuredApp?.title ?? "교과 웹앱 모음"}</strong>
+            </div>
           </div>
         </div>
       </section>
