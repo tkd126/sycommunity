@@ -163,7 +163,7 @@ main {
 }
 
 .hero-copy h1 {
-  font-size: clamp(2.4rem, 5vw, 4.6rem);
+  font-size: clamp(2.35rem, 4.2vw, 4rem);
   letter-spacing: 0;
 }
 
