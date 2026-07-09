@@ -22,6 +22,16 @@ export const apps = [
     thumbnail: "/thumbnails/history-map-census.png",
   },
   {
+    id: "manitto-picker",
+    title: "마니또 뽑기",
+    description:
+      "학생 이름을 넣으면 자기 자신을 제외하고 서로의 마니또를 무작위로 배정하는 학급 활동 웹앱입니다.",
+    subject: "창체",
+    grade: "전학년",
+    tags: ["마니또", "학급활동", "무작위", "관계맺기"],
+    url: "/apps/manitto/",
+  },
+  {
     id: "health-plan",
     title: "건강 계획표 앱",
     description:
