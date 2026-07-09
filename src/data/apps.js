@@ -30,6 +30,7 @@ export const apps = [
     grade: "전학년",
     tags: ["마니또", "학급활동", "무작위", "관계맺기"],
     url: "/apps/manitto/",
+    thumbnail: "/thumbnails/manitto-picker.png",
   },
   {
     id: "health-plan",
