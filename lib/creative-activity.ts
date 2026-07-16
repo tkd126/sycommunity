@@ -41,7 +41,7 @@ export function normalizeCreativeCategory(
 
 export function normalizeCreativeDate(value: string): string | null {
   const match = value.trim().match(
-    /^(\d{1,2})\s*(?:월\s*|[./-])\s*(\d{1,2})\s*(?:일)?\s*(?:\([^()]+\))?$/u,
+    /^(\d{1,2})\s*(?:월\s*|[./-])\s*(\d{1,2})\s*(?:일)?\s*(?:\(\s*[월화수목금토일]\s*\))?$/u,
   );
   if (!match) return null;
 
@@ -128,17 +128,40 @@ export function normalizeCreativeActivities(
 }
 
 function correctReplacementParticles(value: string) {
-  return value
-    .replace(/다양성를/gu, "다양성을")
-    .replace(/다양성가/gu, "다양성이")
-    .replace(/블록 모형와/gu, "블록 모형과")
-    .replace(/블록 모형를/gu, "블록 모형을")
-    .replace(/블록 모형는/gu, "블록 모형은")
-    .replace(/블록 모형가/gu, "블록 모형이");
+  const consonantEndingTerms = ["다양성", "블록 모형"];
+  const vowelEndingTerms = ["점토", "블록형 코딩 도구", "영상 자료"];
+  const consonantCorrections = [
+    ["와", "과"],
+    ["는", "은"],
+    ["로", "으로"],
+    ["를", "을"],
+    ["가", "이"],
+  ] as const;
+  const vowelCorrections = [
+    ["과", "와"],
+    ["은", "는"],
+    ["으로", "로"],
+    ["을", "를"],
+    ["이", "가"],
+  ] as const;
+
+  let corrected = value;
+  consonantEndingTerms.forEach((term) => {
+    consonantCorrections.forEach(([source, replacement]) => {
+      corrected = corrected.replaceAll(`${term}${source}`, `${term}${replacement}`);
+    });
+  });
+  vowelEndingTerms.forEach((term) => {
+    vowelCorrections.forEach(([source, replacement]) => {
+      corrected = corrected.replaceAll(`${term}${source}`, `${term}${replacement}`);
+    });
+  });
+  return corrected;
 }
 
 function toNounEnding(value: string) {
   return value
+    .replace(/입니다$/u, "임")
     .replace(/다짐(?:했|하였)습니다$/u, "다짐")
     .replace(/느꼈습니다$/u, "느낌")
     .replace(/익혔습니다$/u, "익힘")
@@ -150,7 +173,8 @@ function toNounEnding(value: string) {
     .replace(/됩니다$/u, "됨")
     .replace(/있습니다$/u, "있음")
     .replace(/없습니다$/u, "없음")
-    .replace(/보였습니다$/u, "보임");
+    .replace(/보였습니다$/u, "보임")
+    .replace(/습니다$/u, "음");
 }
 
 export function sanitizeCreativeComment(value: string): string {

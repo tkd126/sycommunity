@@ -32,6 +32,8 @@ describe("creative activity normalization", () => {
     ["4월 7일", "4/7"],
     ["4.7(수)", "4/7"],
     [" 4월 7일 ", "4/7"],
+    ["4.7(확인 필요)", null],
+    ["4.7(미상)", null],
     ["13/7", null],
     ["4/31", null],
     ["날짜 미상", null],
@@ -97,6 +99,18 @@ describe("creative activity normalization", () => {
     ]);
   });
 
+  it("preserves non-weekday date suffixes as reviewable source text", () => {
+    const rows = normalizeCreativeActivities([
+      { date: " 4.7(확인 필요) ", category: "자", activity: "안전 교육", hours: 1, needsReview: false },
+      { date: "4.7(미상)", category: "봉", activity: "환경 정리", hours: 1, needsReview: false },
+    ]);
+
+    expect(rows.map(({ date, needsReview }) => ({ date, needsReview }))).toEqual([
+      { date: "4.7(확인 필요)", needsReview: true },
+      { date: "4.7(미상)", needsReview: true },
+    ]);
+  });
+
   it("creates stable response-key-safe ids without personal data", () => {
     const input = [
       { date: "4/7", category: "자율", activity: "홍길동과 안전 교육", hours: 1, needsReview: false },
@@ -131,5 +145,25 @@ describe("creative activity comment sanitization", () => {
   it("removes remaining Latin tokens without joining neighboring Korean words", () => {
     expect(sanitizeCreativeComment("우리ABC활동을 함께 했습니다..."))
       .toBe("우리 활동을 함께 함.");
+  });
+
+  it.each([
+    ["친구를 도왔습니다!", "친구를 도왔음."],
+    ["활동이 즐거웠습니다.", "활동이 즐거웠음."],
+    ["협력의 결과입니다.", "협력의 결과임."],
+  ])("guarantees a noun ending for %s", (source, expected) => {
+    const comment = sanitizeCreativeComment(source);
+
+    expect(comment).toBe(expected);
+    expect(comment.match(/[.!?]/gu)).toHaveLength(1);
+  });
+
+  it.each([
+    ["diversity와 협력을 배웠습니다.", "다양성과 협력을 배움."],
+    ["diversity는 중요한 가치입니다.", "다양성은 중요한 가치임."],
+    ["LEGO로 모형을 만들었습니다.", "블록 모형으로 모형을 만들었음."],
+    ["레고와 클레이로 표현했습니다.", "블록 모형과 점토로 표현함."],
+  ])("corrects particles after generalizing %s", (source, expected) => {
+    expect(sanitizeCreativeComment(source)).toBe(expected);
   });
 });
