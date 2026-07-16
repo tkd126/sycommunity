@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -6,7 +6,7 @@ import { ReportGenerator } from "@/components/ReportGenerator";
 
 const AREA_NAMES = ["문학", "읽기", "쓰기", "문법"];
 
-const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+const fetchImplementation = async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = String(input);
   if (url.endsWith("/api/usage")) {
     return new Response(JSON.stringify({ amountKrw: 1000, budgetKrw: 30000, status: "normal" }));
@@ -45,7 +45,9 @@ const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => 
     }));
   }
   throw new Error(`Unexpected fetch: ${url}`);
-});
+};
+
+const fetchMock = vi.fn(fetchImplementation);
 
 async function fillAreaEvidence(user: ReturnType<typeof userEvent.setup>) {
   await user.upload(
@@ -66,7 +68,8 @@ async function fillRequiredInputs() {
 describe("ReportGenerator", () => {
   beforeEach(() => {
     window.sessionStorage.clear();
-    fetchMock.mockClear();
+    fetchMock.mockReset();
+    fetchMock.mockImplementation(fetchImplementation);
     vi.stubGlobal("fetch", fetchMock);
   });
 
@@ -285,6 +288,57 @@ describe("ReportGenerator", () => {
     expect(screen.queryByText("분석전-계획.pdf")).not.toBeInTheDocument();
     expect(screen.getByText("분석된-계획.pdf")).toBeInTheDocument();
     expect(sessionStorage.getItem("student-record-helper:evaluation-plan:v1")).toContain("분석된-계획.pdf 추출 텍스트");
+  }, 10_000);
+
+  it("분석 중 새 계획을 선택하면 이전 응답이 새 선택을 지우지 않는다", async () => {
+    const immediateFetch = fetchMock.getMockImplementation()!;
+    let resolveAnalysis!: (response: Response) => void;
+    const deferredAnalysis = new Promise<Response>((resolve) => { resolveAnalysis = resolve; });
+    fetchMock.mockImplementation((input, init) => (
+      String(input).endsWith("/api/parse-documents")
+        ? deferredAnalysis
+        : immediateFetch(input, init)
+    ));
+
+    render(<ReportGenerator />);
+    const user = userEvent.setup();
+    await fillAreaEvidence(user);
+    await user.upload(
+      screen.getByLabelText("전체 평가 계획 파일"),
+      new File(["old"], "old-plan.hwp", { type: "application/octet-stream" }),
+    );
+    await user.click(screen.getByRole("button", { name: "첨부 자료 분석" }));
+    expect(await screen.findByRole("button", { name: "자료 분석 중" })).toBeDisabled();
+
+    await user.upload(
+      screen.getByLabelText("전체 평가 계획 파일"),
+      new File(["new"], "new-plan.hwp", { type: "application/octet-stream" }),
+    );
+    expect(screen.getByText("new-plan.hwp")).toBeInTheDocument();
+
+    await act(async () => {
+      resolveAnalysis(new Response(JSON.stringify({
+        roster: Array.from({ length: 6 }, (_, index) => ({ studentNumber: index + 1 })),
+        areas: AREA_NAMES.map((areaName, index) => ({
+          areaId: `area-${index + 1}`,
+          areaName,
+          students: Array.from({ length: 6 }, (_, studentIndex) => ({
+            studentNumber: studentIndex + 1,
+            level: index === 0 ? "매우 잘함" : "잘함",
+            rawLevel: index === 0 ? "매우잘함" : "잘함",
+            confirmed: true,
+          })),
+          warnings: [],
+        })),
+        evaluationPlanText: "old-plan.hwp 추출 텍스트",
+        worksheetText: "익명 수행평가지",
+        warnings: [],
+      })));
+    });
+
+    expect(await screen.findByText("old-plan.hwp")).toBeInTheDocument();
+    expect(screen.getByText("new-plan.hwp")).toBeInTheDocument();
+    expect(sessionStorage.getItem("student-record-helper:evaluation-plan:v1")).toContain("old-plan.hwp 추출 텍스트");
   }, 10_000);
 
   it("공통 계획 세션 JSON에는 허용된 계획 메타데이터만 저장한다", async () => {

@@ -199,8 +199,8 @@ export function ReportGenerator() {
       form.append(fileKey, file);
       return { areaId: `${subject}-area-${index + 1}`, fileKey };
     })));
-    const planFile = pendingEvaluationPlan;
-    if (planFile) form.append("evaluationPlan", planFile);
+    const planFileForRequest = pendingEvaluationPlan;
+    if (planFileForRequest) form.append("evaluationPlan", planFileForRequest);
     workspace.worksheets.forEach((file) => form.append("worksheets", file));
 
     setIsAnalyzing(true);
@@ -212,9 +212,9 @@ export function ReportGenerator() {
       const unnamed = analysis.areas.filter((area) => !area.areaName).length;
       if (unnamed > 0) throw new Error(`${unnamed}개 파일에서 영역명을 확인하지 못했습니다. 파일 내용을 확인해 주세요.`);
       let activeSharedEvaluationPlan = sharedEvaluationPlan;
-      if (planFile) {
+      if (planFileForRequest) {
         activeSharedEvaluationPlan = {
-          fileName: planFile.name,
+          fileName: planFileForRequest.name,
           extractedText: analysis.evaluationPlanText,
           analyzedAt: new Date().toISOString(),
         };
@@ -224,7 +224,7 @@ export function ReportGenerator() {
           activeSharedEvaluationPlan,
         );
         setSharedEvaluationPlan(activeSharedEvaluationPlan);
-        setPendingEvaluationPlan(null);
+        setPendingEvaluationPlan((current) => current === planFileForRequest ? null : current);
       }
       const rows = buildRows(subject, analysis, workspace.areaCount, workspace.rows);
       updateWorkspace({ analysis, rows });
