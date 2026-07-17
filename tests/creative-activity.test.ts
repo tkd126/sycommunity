@@ -166,4 +166,22 @@ describe("creative activity comment sanitization", () => {
   ])("corrects particles after generalizing %s", (source, expected) => {
     expect(sanitizeCreativeComment(source)).toBe(expected);
   });
+
+  it.each([
+    ["diversity가치를 배웠습니다.", "다양성가치를 배움."],
+    ["클레이과정을 살펴봤습니다.", "점토과정을 살펴봤음."],
+  ])("does not mistake a word prefix for a particle in %s", (source, expected) => {
+    expect(sanitizeCreativeComment(source)).toBe(expected);
+  });
+
+  it.each([
+    ["생각을 나눕니다.", "생각을 나눔."],
+    ["작품을 봅니다.", "작품을 봄."],
+    ["정답이 아닙니다.", "정답이 아님."],
+  ])("safely converts common -ㅂ니다 endings in %s", (source, expected) => {
+    const comment = sanitizeCreativeComment(source);
+
+    expect(comment).toBe(expected);
+    expect(comment.match(/[.!?]/gu)).toHaveLength(1);
+  });
 });

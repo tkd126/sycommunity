@@ -130,6 +130,7 @@ export function normalizeCreativeActivities(
 function correctReplacementParticles(value: string) {
   const consonantEndingTerms = ["다양성", "블록 모형"];
   const vowelEndingTerms = ["점토", "블록형 코딩 도구", "영상 자료"];
+  const particleBoundary = "(?=$|[^\\p{L}\\p{N}])";
   const consonantCorrections = [
     ["와", "과"],
     ["는", "은"],
@@ -148,19 +149,38 @@ function correctReplacementParticles(value: string) {
   let corrected = value;
   consonantEndingTerms.forEach((term) => {
     consonantCorrections.forEach(([source, replacement]) => {
-      corrected = corrected.replaceAll(`${term}${source}`, `${term}${replacement}`);
+      corrected = corrected.replace(
+        new RegExp(`${term}${source}${particleBoundary}`, "gu"),
+        `${term}${replacement}`,
+      );
     });
   });
   vowelEndingTerms.forEach((term) => {
     vowelCorrections.forEach(([source, replacement]) => {
-      corrected = corrected.replaceAll(`${term}${source}`, `${term}${replacement}`);
+      corrected = corrected.replace(
+        new RegExp(`${term}${source}${particleBoundary}`, "gu"),
+        `${term}${replacement}`,
+      );
     });
   });
   return corrected;
 }
 
+function convertBieupFormalEnding(value: string) {
+  return value.replace(/([\uAC00-\uD7A3])니다$/u, (match, endingSyllable: string) => {
+    if (endingSyllable === "습") return match;
+
+    const syllableCode = endingSyllable.charCodeAt(0);
+    const jongseongIndex = (syllableCode - 0xac00) % 28;
+
+    return jongseongIndex === 17
+      ? String.fromCharCode(syllableCode - 1)
+      : match;
+  });
+}
+
 function toNounEnding(value: string) {
-  return value
+  return convertBieupFormalEnding(value)
     .replace(/입니다$/u, "임")
     .replace(/다짐(?:했|하였)습니다$/u, "다짐")
     .replace(/느꼈습니다$/u, "느낌")
