@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>☀️ 나의 알찬 여름방학 계획서 🏖️</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .title-font {
+            font-family: 'Fredoka One', 'Noto Sans KR', sans-serif;
+        }
+        /* Scrollbar custom */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .animate-scaleUp {
+            animation: scaleUp 0.15s ease-out forwards;
+        }
+        @keyframes scaleUp {
+            from { transform: scale(0.97); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-amber-50 via-sky-50 to-blue-100 min-h-screen text-slate-800">
+
+<div id="root"></div>
+
+<!-- React, ReactDOM, and Babel -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef } = React;
+
+const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일'];
+
+// 16 Soft and vibrant pastel colors
+const COLOR_PALETTE = [
+    '#ff8a8a', '#ffd1a4', '#fff5a5', '#bbf7be', '#bfdbfe', '#c7d2fe', '#fbcfe8', '#99f6e4',
+    '#f87171', '#fb923c', '#fde047', '#a3e635', '#4ade80', '#2dd4bf', '#38bdf8', '#818cf8'
+];
+
+const EMOJI_LIST = [
+    '🛌', '📚', '✍️', '🏃', '🥪', '🎮', '🏊', '🏀', '🎨', '🧩',
+    '🧹', '🍱', '🦖', '🚲', '🎹', '🏕️', '✈️', '📺', '💤', '🍉',
+    '☀️', '🌈', '🍦', '🏖️', '🎒', '🔋', '👨‍👩‍👧‍👦', '🐾', '⏰', '🍽️'
+];
+
+// Helper to convert minutes (0 ~ 1440) to 12-hour Korean format
+const formatKoreanTime = (mins) => {
+    if (mins === 1440) return '오후 12:00 (자정)';
+    const hour24 = Math.floor(mins / 60);
+    const m = mins % 60;
+    const period = hour24 >= 12 ? '오후' : '오전';
+    const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+    const padMin = String(m).padStart(2, '0');
+    return `${period} ${hour12}:${padMin}`;
+};
+
+function App() {
+    // Tab State: 'wheel' | 'calendar'
+    const [activeTab, setActiveTab] = useState('wheel');
+    const [studentName, setStudentName] = useState('홍길동');
+    const [selectedDay, setSelectedDay] = useState('월');
+    const [toastMessage, setToastMessage] = useState('');
+    const [confirmModal, setConfirmModal] = useState({ show: false, title: '', message: '', onConfirm: null });
+
+    // Custom plans added by the user. Empty list initially to fulfill "start completely empty" requirement.
+    const [customPlans, setCustomPlans] = useState(() => {
+        const saved = localStorage.getItem('summer_planner_customs_v3');
+        if (saved) {
+            try { return JSON.parse(saved); } catch (e) {}
+        }
+        const initial = {};
+        WEEKDAYS.forEach(day => {
+            initial[day] = []; // Empty start as requested
+        });
+        return initial;
+    });
+
+    // Calendar Specific State (2026 ~ 2030)
+    const [currentYear, setCurrentYear] = useState(2026);
+    const [currentMonth, setCurrentMonth] = useState(7); // Summer July
+    const [calendarEvents, setCalendarEvents] = useState(() => {
+        const saved = localStorage.getItem('summer_planner_calendar_events');
+        if (saved) {
+            try { return JSON.parse(saved); } catch (e) {}
+        }
+        return {}; // Format: { "2026-07-20": [ { id, title, color, emoji } ] }
+    });
+    const [showEventModal, setShowEventModal] = useState(false);
+    const [selectedDateStr, setSelectedDateStr] = useState('');
+    const [calendarEventTitle, setCalendarEventTitle] = useState('');
+    const [calendarEventColor, setCalendarEventColor] = useState(COLOR_PALETTE[0]);
+    const [calendarEventEmoji, setCalendarEventEmoji] = useState(EMOJI_LIST[1]);
+
+    // Form inputs matching image_9284a9.png exactly
+    const [startHour, setStartHour] = useState(9); // 9 AM
+    const [startMin, setStartMin] = useState(0);
+    const [endHour, setEndHour] = useState(10); // 10 AM
+    const [endMin, setEndMin] = useState(0);
+    const [planTitle, setPlanTitle] = useState('');
+    const [selectedColor, setSelectedColor] = useState(COLOR_PALETTE[0]);
+    const [selectedEmoji, setSelectedEmoji] = useState(EMOJI_LIST[0]);
+
+    // Editing State (Clicking item from list triggers this)
+    const [editingPlanId, setEditingPlanId] = useState(null);
+
+    // Copy Day Modal state
+    const [showCopyModal, setShowCopyModal] = useState(false);
+    const [copyTargetDays, setCopyTargetDays] = useState([]);
+
+    // Toast alert trigger
+    const triggerToast = (msg) => {
+        setToastMessage(msg);
+        setTimeout(() => setToastMessage(''), 2500);
+    };
+
+    // Auto-save data
+    useEffect(() => {
+        localStorage.setItem('summer_planner_customs_v3', JSON.stringify(customPlans));
+    }, [customPlans]);
+
+    useEffect(() => {
+        localStorage.setItem('summer_planner_calendar_events', JSON.stringify(calendarEvents));
+    }, [calendarEvents]);
+
+    const activeCustomPlans = useMemo(() => {
+        return (customPlans[selectedDay] || []).sort((a, b) => a.start - b.start);
+    }, [customPlans, selectedDay]);
+
+    // Real-time plan preview segment dynamically loaded while user edits or writes in the panel.
+    // Note: The text is kept empty so only the color sector shows on the wheel.
+    const livePreviewPlan = useMemo(() => {
+        const startTotalMins = startHour * 60 + startMin;
+        const endTotalMins = endHour * 60 + endMin;
+        if (startTotalMins >= endTotalMins) return null;
+        return {
+            id: 'live-preview-slice',
+            start: startTotalMins,
+            end: endTotalMins,
+            title: '', // Removed "새 일과 미리보기 📝" to prevent overlaps as requested
+            color: selectedColor,
+            emoji: '', // No emoji to avoid overlap
+            isPreview: true
+        };
+    }, [startHour, startMin, endHour, endMin, selectedColor]);
+
+    // Generates a continuous 24-hour routine array. Gaps between custom plans are padded as "자유 시간"
+    const fullTimeline = useMemo(() => {
+        // Filter out the plan currently being edited so it doesn't double-render
+        let basePlans = activeCustomPlans.filter(p => p.id !== editingPlanId);
+
+        // If preview exists, we can inject it visually over base plans
+        const sorted = [...basePlans];
+        if (livePreviewPlan) {
+            sorted.push(livePreviewPlan);
+        }
+        sorted.sort((a, b) => a.start - b.start);
+
+        const timeline = [];
+        let current = 0;
+
+        sorted.forEach(p => {
+            if (p.start > current) {
+                timeline.push({
+                    id: `free-${current}-${p.start}`,
+                    start: current,
+                    end: p.start,
+                    title: '자유 시간',
+                    color: '#e2e8f0', // Neutral light gray
+                    emoji: '🏖️',
+                    isFree: true
+                });
+            }
+            timeline.push(p);
+            current = p.end;
+        });
+
+        if (current < 1440) {
+            timeline.push({
+                id: `free-${current}-1440`,
+                start: current,
+                end: 1440,
+                title: '자유 시간',
+                color: '#e2e8f0',
+                emoji: '🏖️',
+                isFree: true
+            });
+        }
+
+        return timeline;
+    }, [activeCustomPlans, livePreviewPlan, editingPlanId]);
+
+    // Live vacation scheduler health & balance evaluation algorithm
+    // Now updated for children ideal sleep of 7 ~ 9 hours.
+    const evaluation = useMemo(() => {
+        if (activeCustomPlans.length === 0) {
+            return {
+                score: 0,
+                rating: 'D',
+                tagline: '아직 계획이 등록되지 않은 도화지 상태입니다! ✏️',
+                colorClass: 'text-slate-500 bg-slate-100 ring-2 ring-slate-300',
+                tips: [
+                    '오른쪽 입력창에서 원하는 시작 시간과 종료 시간을 골라 첫 일과를 추가해 보세요!',
+                    '방학은 자유시간도 소중하지만 규칙적인 습관이 더 알찬 하루를 만듭니다.'
+                ]
+            };
+        }
+
+        let sleepMins = 0;
+        let studyMins = 0;
+        let exerciseMins = 0;
+
+        activeCustomPlans.forEach(p => {
+            const t = p.title || '';
+            const e = p.emoji || '';
+            const duration = p.end - p.start;
+
+            if (t.includes('수면') || t.includes('잠') || t.includes('취침') || e === '🛌' || e === '💤') {
+                sleepMins += duration;
+            } else if (t.includes('공부') || t.includes('학습') || t.includes('학원') || t.includes('독서') || t.includes('책') || e === '📚' || e === '✍️') {
+                studyMins += duration;
+            } else if (t.includes('운동') || t.includes('헬스') || t.includes('줄넘기') || t.includes('산책') || e === '🏃' || e === '🏊' || e === '🏀' || e === '🚲') {
+                exerciseMins += duration;
+            }
+        });
+
+        const sleepHrs = sleepMins / 60;
+        const studyHrs = studyMins / 60;
+        const exerciseHrs = exerciseMins / 60;
+
+        let score = 100;
+        const tips = [];
+
+        // 1. Sleep Balance (Ideal: 7 ~ 9 hours)
+        if (sleepHrs >= 7 && sleepHrs <= 9) {
+            tips.push('🛌 아주 규칙적이고 건강한 수면 계획입니다! 키 성장에 큰 도움이 돼요.');
+        } else if (sleepHrs === 0) {
+            score -= 20;
+            tips.push('🛌 수면 일정이 계획표에 빠져 있어요. 규칙적인 취침/기상 일정을 추가해 주세요!');
+        } else if (sleepHrs < 7) {
+            score -= 10;
+            tips.push(`⚠️ 수면 시간이 조금 부족해요 (${sleepHrs.toFixed(1)}시간). 최소 7시간 이상 수면을 권장합니다.`);
+        } else {
+            score -= 10;
+            tips.push(`💤 수면 시간이 너무 과도해요 (${sleepHrs.toFixed(1)}시간). 7~9시간이 성장기 어린이에게 가장 이상적입니다. 오전 기상 시간을 조금 더 일찍 배치해 볼까요?`);
+        }
+
+        // 2. Study Balance (Ideal: 1 ~ 4 hours)
+        if (studyHrs >= 1 && studyHrs <= 4) {
+            tips.push('📚 매일 꾸준한 학습이 계획되어 있네요! 방학 동안 실력이 훌쩍 자라날 거예요.');
+        } else if (studyHrs === 0) {
+            score -= 25;
+            tips.push('⚠️ 하루 배움 일과가 비어있어요. 독서나 방학 숙제 시간을 단 1시간이라도 추가해 보길 권장해요.');
+        } else if (studyHrs > 5) {
+            score -= 10;
+            tips.push(`🔥 공부 시간이 너무 많습니다 (${studyHrs.toFixed(1)}시간). 방학이니까 휴식과 놀이도 밸런스 있게 섞어주세요.`);
+        }
+
+        // 3. Physical Exercise (Ideal: 0.5 ~ 2.5 hours)
+        if (exerciseHrs >= 0.5 && exerciseHrs <= 2.5) {
+            tips.push('🏃 땀 흘리는 멋진 체력 단련 일정이 포함되었습니다. 기초 면역력이 쑥쑥!');
+        } else if (exerciseHrs === 0) {
+            score -= 15;
+            tips.push('🚲 신체 활동 시간이 빠져 있어요. 하루 30분이라도 밖에서 가볍게 뛰노는 시간을 채워보세요.');
+        }
+
+        score = Math.max(15, Math.min(100, score));
+
+        let rating = 'B';
+        let tagline = '성실하게 계획을 잘 세우고 있어요!';
+        let colorClass = 'text-indigo-600 bg-indigo-100 ring-2 ring-indigo-300';
+
+        if (score >= 95) {
+            rating = 'S';
+            tagline = '✨ 갓생 마스터! 완벽한 비율의 훌륭한 여름방학 계획입니다.';
+            colorClass = 'text-emerald-600 bg-emerald-100 ring-2 ring-emerald-300';
+        } else if (score >= 85) {
+            rating = 'A';
+            tagline = '👍 매우 건강하고 조화로운 모범 일정입니다!';
+            colorClass = 'text-sky-600 bg-sky-100 ring-2 ring-sky-300';
+        } else if (score >= 70) {
+            rating = 'B';
+            tagline = '😊 실천하기 수월한 안정적인 방학 계획표입니다.';
+            colorClass = 'text-indigo-600 bg-indigo-100 ring-2 ring-indigo-300';
+        } else if (score >= 50) {
+            rating = 'C';
+            tagline = '🤔 균형 조절이 필요해 보여요. 수면/학습/운동 시간을 고루 채워봅시다.';
+            colorClass = 'text-amber-600 bg-amber-100 ring-2 ring-amber-300';
+        } else {
+            rating = 'D';
+            tagline = '⚠️ 건강한 방학을 위해 하루 일과를 골고루 다양하게 채워보세요!';
+            colorClass = 'text-rose-600 bg-rose-100 ring-2 ring-rose-300';
+        }
+
+        return { score, rating, tagline, colorClass, tips };
+    }, [activeCustomPlans]);
+
+    const handleAddPlan = () => {
+        const startTotalMins = startHour * 60 + startMin;
+        const endTotalMins = endHour * 60 + endMin;
+
+        if (startTotalMins >= endTotalMins) {
+            triggerToast('⚠️ 종료 시간은 무조건 시작 시간보다 늦어야 합니다!');
+            return;
+        }
+
+        // Overlapping detection (exclude self if in edit mode)
+        const hasOverlap = activeCustomPlans.some(p => {
+            if (editingPlanId && p.id === editingPlanId) return false;
+            return startTotalMins < p.end && endTotalMins > p.start;
+        });
+
+        if (hasOverlap) {
+            triggerToast('⚠️ 선택한 시간대가 이미 등록한 다른 계획과 겹칩니다! 다른 시간대를 선택해 주세요.');
+            return;
+        }
+
+        const cleanTitle = planTitle.trim() || '새로운 일과 🎈';
+
+        if (editingPlanId) {
+            // Edit existing plan
+            setCustomPlans(prev => ({
+                ...prev,
+                [selectedDay]: prev[selectedDay].map(p => {
+                    if (p.id === editingPlanId) {
+                        return { ...p, start: startTotalMins, end: endTotalMins, title: cleanTitle, color: selectedColor, emoji: selectedEmoji };
+                    }
+                    return p;
+                }).sort((a, b) => a.start - b.start)
+            }));
+            triggerToast(`✏️ [${cleanTitle}] 일정이 성공적으로 수정되었습니다!`);
+            setEditingPlanId(null);
+        } else {
+            // Add new plan
+            const newPlan = {
+                id: `plan-${Date.now()}`,
+                start: startTotalMins,
+                end: endTotalMins,
+                title: cleanTitle,
+                color: selectedColor,
+                emoji: selectedEmoji
+            };
+
+            setCustomPlans(prev => ({
+                ...prev,
+                [selectedDay]: [...(prev[selectedDay] || []), newPlan].sort((a, b) => a.start - b.start)
+            }));
+            triggerToast(`🎉 [${cleanTitle}] 일정이 성공적으로 추가되었습니다!`);
+        }
+
+        // Reset inputs
+        setPlanTitle('');
+    };
+
+    // Load selected plan into edit panel
+    const handleEditSelect = (item) => {
+        setEditingPlanId(item.id);
+        setPlanTitle(item.title);
+        setSelectedEmoji(item.emoji);
+        setSelectedColor(item.color);
+        setStartHour(Math.floor(item.start / 60));
+        setStartMin(item.start % 60);
+        setEndHour(Math.floor(item.end / 60));
+        setEndMin(item.end % 60);
+        triggerToast(`✏️ [${item.title}] 일정을 편집하는 중입니다. 내용을 수정해 보세요!`);
+    };
+
+    // Cancel edit mode
+    const handleCancelEdit = () => {
+        setEditingPlanId(null);
+        setPlanTitle('');
+        triggerToast('❌ 편집이 취소되었습니다.');
+    };
+
+    // Remove single custom event
+    const handleDeletePlan = (id) => {
+        setConfirmModal({
+            show: true,
+            title: '일정 삭제 확인 🗑️',
+            message: '선택하신 계획을 계획표에서 삭제하시겠습니까? 빈 공간은 자동으로 자유시간으로 채워집니다.',
+            onConfirm: () => {
+                setCustomPlans(prev => ({
+                    ...prev,
+                    [selectedDay]: (prev[selectedDay] || []).filter(p => p.id !== id)
+                }));
+                if (editingPlanId === id) {
+                    setEditingPlanId(null);
+                    setPlanTitle('');
+                }
+                triggerToast('🗑️ 일정이 성공적으로 제거되었습니다.');
+            }
+        });
+    };
+
+    // Copy entire day's routine to multiple target days
+    const executeCopyPlan = () => {
+        if (copyTargetDays.length === 0) {
+            triggerToast("⚠️ 적용할 대상 요일을 한 개 이상 체크해 주세요!");
+            return;
+        }
+
+        const planToCopy = JSON.parse(JSON.stringify(activeCustomPlans));
+        
+        setCustomPlans(prev => {
+            const updated = { ...prev };
+            copyTargetDays.forEach(day => {
+                updated[day] = planToCopy.map((b, i) => ({
+                    ...b,
+                    id: `b${i}-${day}-${Date.now()}`
+                }));
+            });
+            return updated;
+        });
+
+        setShowCopyModal(false);
+        setCopyTargetDays([]);
+        triggerToast(`🎉 [${selectedDay}요일] 계획표가 [${copyTargetDays.join(', ')}]요일로 덮어씌워졌습니다!`);
+    };
+
+    // Convert minutes into Wheel coordinate angles
+    const minuteToRad = (mins) => {
+        const deg = (mins / 1440) * 360 - 90;
+        return (deg * Math.PI) / 180;
+    };
+
+    // Helper function to split text for SVG/Canvas rendering based on visual length
+    const splitTextIntoLines = (text, maxLength = 6) => {
+        if (!text) return [];
+        const result = [];
+        let index = 0;
+        while (index < text.length) {
+            result.push(text.substring(index, index + maxLength));
+            index += maxLength;
+        }
+        return result;
+    };
+
+    const handleExportPNG = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2000;
+        canvas.height = 2000;
+        const ctx = canvas.getContext('2d');
+
+        // Premium Background Gradient
+        const grad = ctx.createLinearGradient(0, 0, 2000, 2000);
+        grad.addColorStop(0, '#fffdf9');
+        grad.addColorStop(0.5, '#f0f9ff');
+        grad.addColorStop(1, '#bae6fd');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 2000, 2000);
+
+        // Frame
+        ctx.lineWidth = 14;
+        ctx.strokeStyle = '#0284c7';
+        ctx.strokeRect(50, 50, 1900, 1900);
+
+        // Header Title Box
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.roundRect(120, 100, 1760, 220, 40);
+        ctx.fill();
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#0369a1';
+        ctx.font = '900 64px "Noto Sans KR", sans-serif';
+        ctx.fillText(`☀️ ${studentName}의 알찬 여름방학 계획서 🏖️`, 1000, 175);
+
+        ctx.fillStyle = '#f97316';
+        ctx.font = 'bold 36px "Noto Sans KR", sans-serif';
+        ctx.fillText(`[ ${selectedDay}요일 ] 일일 생활 계획표`, 1000, 260);
+
+        // Circle coordinates
+        const CX = 1000;
+        const CY = 1050;
+        const R_OUTER = 600;
+        const R_INNER = 200;
+
+        // Draw sectors
+        fullTimeline.forEach(item => {
+            const startAng = minuteToRad(item.start);
+            const endAng = minuteToRad(item.end);
+
+            ctx.fillStyle = item.color;
+            ctx.beginPath();
+            ctx.moveTo(CX, CY);
+            ctx.arc(CX, CY, R_OUTER, startAng, endAng);
+            ctx.closePath();
+            ctx.fill();
+
+            // Slices border
+            ctx.lineWidth = item.isPreview ? 8 : 4;
+            ctx.strokeStyle = item.isPreview ? '#f97316' : '#ffffff';
+            ctx.stroke();
+        });
+
+        // Center Rim Circle
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(CX, CY, R_INNER, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.lineWidth = 10;
+        ctx.strokeStyle = '#0284c7';
+        ctx.stroke();
+
+        ctx.fillStyle = '#0284c7';
+        ctx.font = '900 42px "Noto Sans KR", sans-serif';
+        ctx.fillText("방학 생활", CX, CY - 10);
+        ctx.fillStyle = '#f97316';
+        ctx.font = '900 32px "Noto Sans KR", sans-serif';
+        ctx.fillText(`${selectedDay}요일`, CX, CY + 40);
+
+        // Hour Ticks (0 ~ 24)
+        for (let h = 0; h < 24; h++) {
+            const mins = h * 60;
+            const angle = minuteToRad(mins);
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+
+            ctx.beginPath();
+            ctx.moveTo(CX + cos * R_OUTER, CY + sin * R_OUTER);
+            ctx.lineTo(CX + cos * (R_OUTER + 20), CY + sin * (R_OUTER + 20));
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = '#0284c7';
+            ctx.stroke();
+
+            // Hour numbers printed clearly outside the rim
+            const labelDist = R_OUTER + 55;
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '900 32px "Noto Sans KR", sans-serif';
+            ctx.fillText(h === 0 ? '24' : String(h), CX + cos * labelDist, CY + sin * labelDist);
+        }
+
+        // Draw text inside each sector with automatic wrapping & perfectly HORIZONTAL alignment
+        fullTimeline.forEach((item, idx) => {
+            if (item.isPreview) return; // Do not draw text/labels for preview slice to keep it completely empty as requested
+
+            const startAng = minuteToRad(item.start);
+            const endAng = minuteToRad(item.end);
+            const midAng = (startAng + endAng) / 2;
+            const durationMins = item.end - item.start;
+
+            // Stagger radius calculation to prevent horizontal overlaps on thin slices
+            const isStaggered = durationMins < 80;
+            const labelRadius = isStaggered 
+                ? (idx % 2 === 0 ? (R_OUTER + R_INNER) / 2 - 50 : (R_OUTER + R_INNER) / 2 + 50)
+                : (R_OUTER + R_INNER) / 2;
+
+            const textX = CX + Math.cos(midAng) * labelRadius;
+            const textY = CY + Math.sin(midAng) * labelRadius;
+
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = '#ffffff';
+            ctx.shadowBlur = 10;
+
+            let fontSz = 32;
+            let wrapLimit = 7;
+            if (durationMins < 45) {
+                fontSz = 22;
+                wrapLimit = 4;
+            } else if (durationMins < 90) {
+                fontSz = 28;
+                wrapLimit = 5;
+            }
+
+            ctx.font = `900 ${fontSz}px "Noto Sans KR", sans-serif`;
+            ctx.fillStyle = '#0f172a';
+
+            const fullText = `${item.emoji || '⏰'} ${item.title}`;
+
+            if (durationMins < 35) {
+                // Too small sector, just draw emoji centered
+                ctx.fillText(item.emoji || '⏰', textX, textY);
+            } else {
+                // Apply word wrapping inside canvas sector
+                const lines = splitTextIntoLines(item.title, wrapLimit);
+                const firstLineText = `${item.emoji || '⏰'} ${lines[0] || ''}`;
+                
+                if (lines.length > 1) {
+                    // Render multi-line horizontally aligned text safely
+                    ctx.fillText(firstLineText, textX, textY - fontSz * 0.6);
+                    for (let i = 1; i < Math.min(lines.length, 3); i++) {
+                        ctx.fillText(lines[i], textX, textY + fontSz * (0.6 + (i - 1) * 1.1));
+                    }
+                } else {
+                    ctx.fillText(fullText, textX, textY);
+                }
+            }
+
+            ctx.restore();
+        });
+
+        // Bottom Score Board
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.roundRect(120, 1720, 1760, 180, 30);
+        ctx.fill();
+
+        ctx.fillStyle = '#0284c7';
+        ctx.beginPath();
+        ctx.roundRect(170, 1750, 320, 120, 20);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '900 38px "Noto Sans KR", sans-serif';
+        ctx.fillText(`일과점수: ${evaluation.score}점`, 330, 1810);
+
+        ctx.fillStyle = '#1e293b';
+        ctx.textAlign = 'left';
+        ctx.font = '900 32px "Noto Sans KR", sans-serif';
+        ctx.fillText(evaluation.tagline, 530, 1785);
+
+        ctx.fillStyle = '#64748b';
+        ctx.font = '600 24px "Noto Sans KR", sans-serif';
+        const renderTips = evaluation.tips.slice(0, 2);
+        renderTips.forEach((tip, idx) => {
+            let chunk = tip;
+            if (chunk.length > 50) chunk = chunk.substring(0, 50) + '...';
+            ctx.fillText(chunk, 530, 1835 + idx * 35);
+        });
+
+        // Trigger safe file download
+        const url = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `여름방학계획표_${studentName}_${selectedDay}요일.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        triggerToast("💾 계획표 이미지 다운로드가 성공적으로 시작되었습니다!");
+    };
+
+    const getDaysInMonth = (year, month) => {
+        return new Date(year, month, 0).getDate();
+    };
+
+    const getFirstDayOffset = (year, month) => {
+        // 0 = Sun, 1 = Mon ...
+        const offset = new Date(year, month - 1, 1).getDay();
+        return offset === 0 ? 6 : offset - 1; // Convert to Mon-Sun index (0 = Mon, 6 = Sun)
+    };
+
+    const handleCalendarDayClick = (dayNum) => {
+        const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+        setSelectedDateStr(dateStr);
+        setCalendarEventTitle('');
+        setShowEventModal(true);
+    };
+
+    const handleAddCalendarEvent = () => {
+        if (!calendarEventTitle.trim()) {
+            triggerToast('⚠️ 일정 내용을 적어주세요!');
+            return;
+        }
+
+        const newEvent = {
+            id: `cal-evt-${Date.now()}`,
+            title: calendarEventTitle.trim(),
+            color: calendarEventColor,
+            emoji: calendarEventEmoji
+        };
+
+        setCalendarEvents(prev => {
+            const currentList = prev[selectedDateStr] || [];
+            return {
+                ...prev,
+                [selectedDateStr]: [...currentList, newEvent]
+            };
+        });
+
+        setShowEventModal(false);
+        triggerToast('📅 달력 일정이 성공적으로 등록되었습니다!');
+    };
+
+    const handleDeleteCalendarEvent = (dateStr, id) => {
+        setConfirmModal({
+            show: true,
+            title: '달력 일정 삭제 🗑️',
+            message: '이 날짜의 해당 특이 일정을 정말 삭제할까요?',
+            onConfirm: () => {
+                setCalendarEvents(prev => {
+                    const filtered = (prev[dateStr] || []).filter(evt => evt.id !== id);
+                    const updated = { ...prev };
+                    if (filtered.length === 0) {
+                        delete updated[dateStr];
+                    } else {
+                        updated[dateStr] = filtered;
+                    }
+                    return updated;
+                });
+                triggerToast('🗑️ 일정이 달력에서 지워졌습니다.');
+            }
+        });
+    };
+
+    const handleExportCalendarPNG = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1600;
+        canvas.height = 1400;
+        const ctx = canvas.getContext('2d');
+
+        // Draw Clean white/blue gradient bg
+        const grad = ctx.createLinearGradient(0, 0, 1600, 1400);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(1, '#e0f2fe');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 1600, 1400);
+
+        // Header Border Frame
+        ctx.lineWidth = 10;
+        ctx.strokeStyle = '#0284c7';
+        ctx.strokeRect(40, 40, 1520, 1320);
+
+        // Header Title Text
+        ctx.fillStyle = '#0369a1';
+        ctx.font = '900 56px "Noto Sans KR", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`📅 ${studentName}의 여름방학 달력 (${currentYear}년 ${currentMonth}월)`, 800, 120);
+
+        // Grid Drawing Parameters
+        const startX = 80;
+        const startY = 220;
+        const colW = 205;
+        const rowH = 180;
+
+        const weekdayLabels = ['월', '화', '수', '목', '금', '토', '일'];
+        ctx.font = 'bold 28px "Noto Sans KR", sans-serif';
+        ctx.fillStyle = '#334155';
+        for (let i = 0; i < 7; i++) {
+            ctx.fillText(weekdayLabels[i], startX + i * colW + colW / 2, startY - 30);
+        }
+
+        const totalDays = getDaysInMonth(currentYear, currentMonth);
+        const offset = getFirstDayOffset(currentYear, currentMonth);
+
+        let colIdx = offset;
+        let rowIdx = 0;
+
+        for (let d = 1; d <= totalDays; d++) {
+            const rx = startX + colIdx * colW;
+            const ry = startY + rowIdx * rowH;
+
+            // Day Box
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.roundRect(rx, ry, colW - 10, rowH - 10, 15);
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.stroke();
+
+            // Day number text
+            ctx.fillStyle = colIdx === 5 ? '#2563eb' : colIdx === 6 ? '#dc2626' : '#1e293b';
+            ctx.font = '900 28px "Noto Sans KR", sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(String(d), rx + 15, ry + 40);
+
+            // Fetch and draw events on that day
+            const dateKey = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const events = calendarEvents[dateKey] || [];
+            
+            events.slice(0, 3).forEach((evt, eIdx) => {
+                ctx.fillStyle = evt.color;
+                ctx.beginPath();
+                ctx.roundRect(rx + 10, ry + 60 + eIdx * 35, colW - 30, 30, 6);
+                ctx.fill();
+
+                ctx.fillStyle = '#0f172a';
+                ctx.font = 'bold 16px "Noto Sans KR", sans-serif';
+                ctx.textAlign = 'left';
+                const dispText = `${evt.emoji} ${evt.title}`;
+                const clippedText = dispText.length > 10 ? dispText.substring(0, 10) + '..' : dispText;
+                ctx.fillText(clippedText, rx + 15, ry + 80 + eIdx * 35);
+            });
+
+            colIdx++;
+            if (colIdx > 6) {
+                colIdx = 0;
+                rowIdx++;
+            }
+        }
+
+        // Trigger safe file download
+        const url = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `여름방학달력_${studentName}_${currentYear}년_${currentMonth}월.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        triggerToast("💾 달력 이미지 다운로드가 성공적으로 시작되었습니다!");
+    };
+
+    return (
+        <div className="max-w-7xl mx-auto px-4 py-8 relative">
+            
+            {/* Custom Toast Alert */}
+            {toastMessage && (
+                <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-md text-white font-black text-xs py-3.5 px-6 rounded-2xl shadow-2xl z-50 transition-all border border-slate-700 animate-bounce flex items-center gap-2">
+                    <span>🔔</span> {toastMessage}
+                </div>
+            )}
+
+            {/* Custom confirmation dialog box */}
+            {confirmModal.show && (
+                <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-sky-100 animate-scaleUp">
+                        <h3 className="font-extrabold text-slate-900 text-base mb-2">{confirmModal.title}</h3>
+                        <p className="text-xs text-slate-500 mb-5 leading-relaxed">{confirmModal.message}</p>
+                        <div className="flex gap-2.5 justify-end">
+                            <button
+                                onClick={() => setConfirmModal({ show: false, title: '', message: '', onConfirm: null })}
+                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition"
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (confirmModal.onConfirm) confirmModal.onConfirm();
+                                    setConfirmModal({ show: false, title: '', message: '', onConfirm: null });
+                                }}
+                                className="px-4.5 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-bold shadow-md transition"
+                            >
+                                확인
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Application Header banner (image_06713b.png match) */}
+            <header className="text-center mb-6 bg-white p-6 rounded-3xl shadow-md border border-sky-100 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <span className="text-4xl">☀️</span>
+                    <div className="text-left">
+                        <h1 className="text-2xl md:text-3xl font-black text-sky-600 title-font tracking-wide">
+                            나의 여름방학 생활 계획서
+                        </h1>
+                        <p className="text-xs md:text-sm text-slate-500 font-medium">10분 단위 똑딱 선택과 실시간 갓생 점수 판정판이 탑재된 똑똑한 원판계획표</p>
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 bg-sky-50/75 p-2 rounded-2xl">
+                    <label className="text-sm font-bold text-sky-700 ml-2">계획표 주인공:</label>
+                    <input
+                        type="text"
+                        value={studentName}
+                        onChange={(e) => setStudentName(e.target.value)}
+                        className="bg-white text-center font-bold text-sky-900 border-2 border-sky-200 rounded-xl px-3 py-1.5 w-36 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                        placeholder="이름 입력"
+                        maxLength="10"
+                    />
+                    <span className="text-sm font-bold text-sky-700 pr-2">학생</span>
+                </div>
+            </header>
+
+            {/* Premium Score Dashboard at the top (image_06713b.png visual style) */}
+            <section className="mb-6 bg-white rounded-2xl p-4 shadow-md border border-sky-100 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    <div className={`px-4 py-2.5 rounded-xl font-black text-sm shrink-0 flex items-center gap-2 ${evaluation.colorClass}`}>
+                        <span className="text-base">🏆 등급: {evaluation.rating}</span>
+                        <span className="opacity-40">|</span>
+                        <span>{evaluation.score}점</span>
+                    </div>
+                    <div className="text-left">
+                        <span className="text-[11px] font-extrabold text-sky-600 uppercase tracking-widest block">실시간 방학 밸런스 점수</span>
+                        <p className="text-xs font-bold text-slate-700 leading-none mt-1">{evaluation.tagline}</p>
+                    </div>
+                </div>
+                
+                <div className="text-[11px] font-semibold text-slate-500 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100 flex-1 max-w-2xl text-center md:text-left leading-relaxed">
+                    💡 <span className="text-sky-600 font-bold">성장기 어린이 권장 시간:</span> 하루 수면 7~9시간 🛌, 성실한 배움/독서 1~4시간 📚, 건강 운동 30분~2시간 🏃
+                </div>
+            </section>
+
+            {/* Segmented Dual Format Tabs Switcher */}
+            <div className="flex justify-center mb-6">
+                <div className="bg-slate-200/80 p-1 rounded-2xl flex gap-1 shadow-inner">
+                    <button
+                        onClick={() => setActiveTab('wheel')}
+                        className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 ${
+                            activeTab === 'wheel'
+                                ? 'bg-white text-sky-600 shadow-md'
+                                : 'text-slate-600 hover:text-slate-800'
+                        }`}
+                    >
+                        <span>☀️</span> 일일 원판 계획표
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('calendar')}
+                        className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 ${
+                            activeTab === 'calendar'
+                                ? 'bg-white text-indigo-600 shadow-md'
+                                : 'text-slate-600 hover:text-slate-800'
+                        }`}
+                    >
+                        <span>📅</span> 방학 특이사항 달력 (2026~2030)
+                    </button>
+                </div>
+            </div>
+
+            {/* TAB CONTENT: Circular daily wheel planner */}
+            {activeTab === 'wheel' && (
+                <div className="flex flex-col gap-8 animate-scaleUp">
+                    
+                    {}
+                    {/* 1. TOP HUGE WHEEL CARD */}
+                    <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 flex flex-col items-center w-full">
+                        
+                        {/* Day Selector & Copy controls inside the main block */}
+                        <div className="w-full flex flex-col md:flex-row justify-between items-center gap-4 border-b border-slate-100 pb-4 mb-4">
+                            <div className="flex items-center gap-2">
+                                <span className="bg-sky-100 text-sky-700 text-xs px-2.5 py-1 rounded-md font-bold">선택 요일</span>
+                                <div className="flex gap-1 overflow-x-auto py-1">
+                                    {WEEKDAYS.map(day => (
+                                        <button
+                                            key={day}
+                                            onClick={() => {
+                                                setSelectedDay(day);
+                                                setEditingPlanId(null);
+                                                setPlanTitle('');
+                                                triggerToast(`${day}요일 계획표 편집 상태로 변경되었습니다.`);
+                                            }}
+                                            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                                                selectedDay === day
+                                                    ? 'bg-sky-500 text-white shadow-md ring-2 ring-sky-300'
+                                                    : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
+                                            }`}
+                                        >
+                                            {day}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowCopyModal(true)}
+                                className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-xl text-xs font-bold border border-indigo-200 transition flex items-center gap-1.5 shadow-sm"
+                            >
+                                📋 {selectedDay}요일 계획표를 다른 요일에 복사
+                            </button>
+                        </div>
+
+                        <div className="text-center mb-4">
+                            <h3 className="text-base font-extrabold text-slate-800">☀️ {selectedDay}요일의 초대형 원판 일과표</h3>
+                            <p className="text-xs text-slate-400 mt-1">
+                                {livePreviewPlan ? (
+                                    <span className="text-orange-500 font-extrabold">⚡ 지금 아래에서 입력 중인 일정 범위가 주황색 점선 영역으로 즉시 원판에 반영되고 있습니다.</span>
+                                ) : (
+                                    '원판 크기를 극대화하고 모든 글씨를 수평으로 고정하여 겹침 없이 선명하게 한눈에 읽을 수 있습니다.'
+                                )}
+                            </p>
+                        </div>
+
+                        {/* Interactive Circle Wheel Box - Scale significantly increased for clear presentation */}
+                        <div className="relative w-full max-w-[650px] aspect-square flex items-center justify-center p-2 bg-slate-50/50 rounded-full border border-dashed border-slate-200 my-4">
+                            <svg
+                                viewBox="-120 -120 240 240"
+                                className="w-full h-full select-none drop-shadow-md"
+                            >
+                                <circle cx="0" cy="0" r="102" fill="none" stroke="#e2e8f0" strokeWidth="1" />
+                                
+                                {fullTimeline.map((item) => {
+                                    const startRad = minuteToRad(item.start);
+                                    const endRad = minuteToRad(item.end);
+                                    
+                                    const x1 = Math.cos(startRad) * 100;
+                                    const y1 = Math.sin(startRad) * 100;
+                                    const x2 = Math.cos(endRad) * 100;
+                                    const y2 = Math.sin(endRad) * 100;
+
+                                    const largeArcFlag = item.end - item.start > 720 ? 1 : 0;
+
+                                    return (
+                                        <g key={item.id}>
+                                            <path
+                                                d={`M 0 0 L ${x1} ${y1} A 100 100 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
+                                                fill={item.color}
+                                                stroke={item.isPreview ? '#f97316' : '#ffffff'}
+                                                strokeWidth={item.isPreview ? '1.5' : '1'}
+                                                strokeDasharray={item.isPreview ? '3, 1.5' : 'none'}
+                                                opacity={item.isPreview ? 0.8 : 0.95}
+                                                className="transition-all duration-200 hover:opacity-100"
+                                            />
+                                        </g>
+                                    );
+                                })}
+
+                                <circle cx="0" cy="0" r="32" fill="#ffffff" stroke="#0ea5e9" strokeWidth="2.5" />
+                                <text x="0" y="0" textAnchor="middle" dominantBaseline="central" className="fill-sky-600 font-black text-[7.5px] tracking-tight pointer-events-none">
+                                    방학생활
+                                </text>
+
+                                {/* Texts inside each slice - ALWAYS Horizontal and staggered to prevent overlapping! */}
+                                {fullTimeline.map((item, idx) => {
+                                    if (item.isPreview) return null; // Avoid drawing preview title/text to keep circle clean and prevent text overlapping
+
+                                    const startRad = minuteToRad(item.start);
+                                    const endRad = minuteToRad(item.end);
+                                    const midRad = (startRad + endRad) / 2;
+                                    const durationMins = item.end - item.start;
+
+                                    // Stagger the radius (lx, ly) if adjacent chunks are thin, preventing horizontal collisions near each other!
+                                    const isStaggered = durationMins < 80;
+                                    const labelR = isStaggered 
+                                        ? (idx % 2 === 0 ? 58 : 78) 
+                                        : 68;
+
+                                    const lx = Math.cos(midRad) * labelR;
+                                    const ly = Math.sin(midRad) * labelR;
+
+                                    let wrapLimit = 7;
+                                    let shrinkText = false;
+                                    
+                                    if (durationMins < 40) {
+                                        shrinkText = true;
+                                        wrapLimit = 4;
+                                    } else if (durationMins < 90) {
+                                        wrapLimit = 5;
+                                    }
+
+                                    const textLines = splitTextIntoLines(item.title, wrapLimit);
+                                    
+                                    if (durationMins < 35) {
+                                        // Sector is too tiny, show emoji only to prevent overflow
+                                        return (
+                                            <g key={`lbl-${item.id}`} pointerEvents="none">
+                                                <text
+                                                    x={lx}
+                                                    y={ly}
+                                                    textAnchor="middle"
+                                                    dominantBaseline="central"
+                                                    stroke="#ffffff"
+                                                    strokeWidth="2"
+                                                    paintOrder="stroke"
+                                                    className="fill-slate-800 font-black text-[9px]"
+                                                >
+                                                    {item.emoji || '⏰'}
+                                                </text>
+                                            </g>
+                                        );
+                                    }
+
+                                    return (
+                                        <g key={`lbl-${item.id}`} pointerEvents="none">
+                                            <text
+                                                x={lx}
+                                                y={ly}
+                                                textAnchor="middle"
+                                                dominantBaseline="central"
+                                                stroke="#ffffff"
+                                                strokeWidth="2.5"
+                                                paintOrder="stroke"
+                                                className={`fill-slate-800 font-black ${shrinkText ? 'text-[6px]' : 'text-[7.5px]'}`}
+                                            >
+                                                {textLines.length > 1 ? (
+                                                    <React.Fragment>
+                                                        {/* First line with emoji */}
+                                                        <tspan x={lx} dy={`-${(textLines.length - 1) * 3.5}px`}>
+                                                            {item.emoji} {textLines[0]}
+                                                        </tspan>
+                                                        {/* Remaining wrapped lines */}
+                                                        {textLines.slice(1, 3).map((line, idx2) => (
+                                                            <tspan key={idx2} x={lx} dy="8.5px">
+                                                                {line}
+                                                            </tspan>
+                                                        ))}
+                                                    </React.Fragment>
+                                                ) : (
+                                                    <tspan x={lx} y={ly}>
+                                                        {item.emoji} {item.title}
+                                                    </tspan>
+                                                )}
+                                            </text>
+                                        </g>
+                                    );
+                                })}
+
+                                {/* Ticks & Hour Labels */}
+                                {[...Array(24).keys()].map(h => {
+                                    const mins = h * 60;
+                                    const rad = minuteToRad(mins);
+                                    const cos = Math.cos(rad);
+                                    const sin = Math.sin(rad);
+                                    const isMajor = h % 3 === 0;
+
+                                    return (
+                                        <g key={`tick-${h}`}>
+                                            <line
+                                                x1={cos * 100}
+                                                y1={sin * 100}
+                                                x2={cos * (isMajor ? 104 : 102)}
+                                                y2={sin * (isMajor ? 104 : 102)}
+                                                stroke="#0284c7"
+                                                strokeWidth={isMajor ? "1.2" : "0.5"}
+                                            />
+                                            {h % 2 === 0 && (
+                                                <text
+                                                    x={cos * 111}
+                                                    y={sin * 111}
+                                                    textAnchor="middle"
+                                                    dominantBaseline="central"
+                                                    className="fill-sky-900 font-extrabold text-[7.5px]"
+                                                >
+                                                    {h === 0 ? '24' : h}
+                                                </text>
+                                            )}
+                                        </g>
+                                    );
+                                })}
+                            </svg>
+                        </div>
+
+                        {/* Export Button below wheel */}
+                        <div className="w-full max-w-[650px] mt-2">
+                            <button
+                                onClick={handleExportPNG}
+                                className="w-full py-4 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-2xl font-black text-xs md:text-sm shadow-md transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                            >
+                                📥 {selectedDay}요일 계획표 고해상도 이미지 저장 (PNG)
+                            </button>
+                        </div>
+                    </div>
+
+                    {}
+                    {/* 2. BOTTOM LAYOUT SECTION (Side-by-side grid) */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                        
+                        {/* LEFT COLUMN: image_9284a9.png Style Input Form */}
+                        <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-100 space-y-5">
+                            
+                            {/* Title badge */}
+                            <div className="flex justify-between items-center">
+                                <div className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-600 font-extrabold text-xs px-3 py-1.5 rounded-full">
+                                    <span>{editingPlanId ? '✏️' : '⏰'}</span> 
+                                    <span>{editingPlanId ? '선택한 일과 수정하기' : '새로운 하루 일과 적기'}</span>
+                                </div>
+                                {editingPlanId && (
+                                    <button
+                                        onClick={handleCancelEdit}
+                                        className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold px-2.5 py-1 rounded-xl transition"
+                                    >
+                                        수정 취소
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Dropdown times selector block (image_9284a9.png standard) */}
+                            <div className="space-y-3">
+                                <div className="grid grid-cols-2 gap-4">
+                                    
+                                    {/* Start Time selector */}
+                                    <div className="space-y-1">
+                                        <label className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
+                                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                            시작 시간
+                                        </label>
+                                        <div className="flex items-center gap-1 bg-slate-50 p-2.5 rounded-xl border border-slate-150">
+                                            <select
+                                                value={startHour}
+                                                onChange={(e) => setStartHour(Number(e.target.value))}
+                                                className="w-full bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+                                            >
+                                                {[...Array(24).keys()].map(h => {
+                                                    const label = h >= 12 ? `오후 ${h === 12 ? 12 : h - 12}시` : `오전 ${h === 0 ? 12 : h}시`;
+                                                    return <option key={h} value={h}>{label}</option>;
+                                                })}
+                                            </select>
+                                            <span className="text-slate-400 text-xs">:</span>
+                                            <select
+                                                value={startMin}
+                                                onChange={(e) => setStartMin(Number(e.target.value))}
+                                                className="w-full bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+                                            >
+                                                {[0, 10, 20, 30, 40, 50].map(m => (
+                                                    <option key={m} value={m}>{String(m).padStart(2, '0')}분</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* End Time selector */}
+                                    <div className="space-y-1">
+                                        <label className="text-[11px] font-bold text-rose-500 flex items-center gap-1">
+                                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                            종료 시간
+                                        </label>
+                                        <div className="flex items-center gap-1 bg-slate-50 p-2.5 rounded-xl border border-slate-150">
+                                            <select
+                                                value={endHour}
+                                                onChange={(e) => setEndHour(Number(e.target.value))}
+                                                className="w-full bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+                                            >
+                                                {[...Array(25).keys()].map(h => {
+                                                    let label = '';
+                                                    if (h === 24) label = '오후 12시(자정)';
+                                                    else if (h >= 12) label = `오후 ${h === 12 ? 12 : h - 12}시`;
+                                                    else label = `오전 ${h === 0 ? 12 : h}시`;
+                                                    return <option key={h} value={h}>{label}</option>;
+                                                })}
+                                            </select>
+                                            <span className="text-slate-400 text-xs">:</span>
+                                            <select
+                                                value={endMin}
+                                                disabled={endHour === 24}
+                                                onChange={(e) => setEndMin(Number(e.target.value))}
+                                                className="w-full bg-transparent text-xs font-bold text-slate-800 focus:outline-none disabled:opacity-50 cursor-pointer"
+                                            >
+                                                {[0, 10, 20, 30, 40, 50].map(m => (
+                                                    <option key={m} value={m}>{String(m).padStart(2, '0')}분</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            {/* Plan title input matching image_9284a9.png */}
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-slate-600 block">무엇을 할 계획인가요?</label>
+                                <div className="flex gap-2">
+                                    <select
+                                        value={selectedEmoji}
+                                        onChange={(e) => setSelectedEmoji(e.target.value)}
+                                        className="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xl focus:outline-none cursor-pointer"
+                                    >
+                                        {EMOJI_LIST.map(emo => (
+                                            <option key={emo} value={emo}>{emo}</option>
+                                        ))}
+                                    </select>
+                                    <input
+                                        type="text"
+                                        value={planTitle}
+                                        onChange={(e) => setPlanTitle(e.target.value)}
+                                        className="w-full px-4 py-2.5 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-xs focus:outline-none focus:ring-2 focus:ring-sky-400"
+                                        placeholder="예) 독서 타임, 시원한 물놀이 🏊, 영어 공부"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Color Selector layout */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-600 block">일정을 대표할 예쁜 색상을 골라주세요!</label>
+                                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                                    <div className="grid grid-cols-8 gap-2.5 justify-items-center">
+                                        {COLOR_PALETTE.map(color => (
+                                            <button
+                                                key={color}
+                                                type="button"
+                                                onClick={() => setSelectedColor(color)}
+                                                className={`w-6 h-6 rounded-full transition-all flex items-center justify-center ${
+                                                    selectedColor === color 
+                                                        ? 'scale-110 ring-2 ring-sky-500 ring-offset-2' 
+                                                        : 'hover:scale-105'
+                                                }`}
+                                                style={{ backgroundColor: color }}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Submit Action Button */}
+                            <button
+                                type="button"
+                                onClick={handleAddPlan}
+                                className={`w-full py-3.5 text-white rounded-2xl font-black text-xs shadow-md transition-all flex items-center justify-center gap-1.5 ${
+                                    editingPlanId 
+                                        ? 'bg-amber-500 hover:bg-amber-600' 
+                                        : 'bg-sky-500 hover:bg-sky-600'
+                                }`}
+                            >
+                                <span>{editingPlanId ? '✏️' : '➕'}</span>
+                                {editingPlanId ? '계획 수정 완료하기' : '계획에 추가하기'}
+                            </button>
+
+                        </div>
+
+                        {}
+                        {/* RIGHT COLUMN: Added schedules manager list (image_92ffaf.png style) */}
+                        <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-100">
+                            <div className="flex justify-between items-center pb-3 border-b border-slate-100 mb-3">
+                                <div>
+                                    <h3 className="font-extrabold text-slate-800 text-sm">📝 등록된 계획 리스트</h3>
+                                    <p className="text-[10px] text-slate-400 mt-0.5">💡 일과 항목을 누르면 일과명과 시간을 편리하게 수정할 수 있어요!</p>
+                                </div>
+                                <span className="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded">총 {activeCustomPlans.length}개 활동</span>
+                            </div>
+
+                            {activeCustomPlans.length === 0 ? (
+                                <div className="py-12 text-center text-slate-400 text-xs space-y-1.5">
+                                    <div>🍉 등록된 방학 일과가 존재하지 않습니다.</div>
+                                    <div className="text-[11px] text-slate-400">왼쪽의 입력 상자를 채운 후 추가 버튼을 눌러 하루를 멋지게 조립해 주세요!</div>
+                                </div>
+                            ) : (
+                                <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+                                    {activeCustomPlans.map(item => {
+                                        const isEditingNow = editingPlanId === item.id;
+                                        return (
+                                            <div
+                                                key={item.id}
+                                                onClick={() => handleEditSelect(item)}
+                                                className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer ${
+                                                    isEditingNow 
+                                                        ? 'border-amber-400 bg-amber-50/50 hover:bg-amber-50 shadow-inner' 
+                                                        : 'border-slate-100 bg-slate-50/50 hover:bg-slate-100/80'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <span className="w-4 h-4 rounded-full" style={{ backgroundColor: item.color }}></span>
+                                                    <span className="text-xl">{item.emoji}</span>
+                                                    <div className="text-left">
+                                                        <h4 className="font-bold text-xs text-slate-800">
+                                                            {item.title}
+                                                            {isEditingNow && <span className="ml-1.5 text-[9px] font-extrabold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full">편집 중</span>}
+                                                        </h4>
+                                                        <p className="text-[10px] text-slate-400 font-bold mt-0.5">
+                                                            ⏱️ {formatKoreanTime(item.start)} ~ {formatKoreanTime(item.end)} ({item.end - item.start}분간)
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // Prevent loading to edit form while deleting
+                                                        handleDeletePlan(item.id);
+                                                    }}
+                                                    className="px-2.5 py-1.5 text-rose-500 hover:bg-rose-50 rounded-lg text-[10px] font-extrabold transition shrink-0"
+                                                >
+                                                    삭제
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                    </div>
+
+                </div>
+            )}
+
+            {}
+            {/* TAB CONTENT: 2026 ~ 2030 Calendar Planner */}
+            {activeTab === 'calendar' && (
+                <div className="bg-white p-6 rounded-3xl shadow-xl border border-sky-100 animate-scaleUp">
+                    
+                    {/* Header Controls for Calendar */}
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4 pb-4 border-b border-slate-150 mb-6">
+                        <div className="flex items-center gap-2.5">
+                            <span className="text-xl">📅</span>
+                            <h3 className="font-black text-slate-800 text-sm">2026 ~ 2030 장기방학 로드맵 달력</h3>
+                        </div>
+
+                        {/* Selectors for Year, Month */}
+                        <div className="flex flex-wrap items-center gap-2.5">
+                            {/* Year Select */}
+                            <select
+                                value={currentYear}
+                                onChange={(e) => setCurrentYear(Number(e.target.value))}
+                                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-extrabold text-slate-700 focus:outline-none"
+                            >
+                                {[2026, 2027, 2028, 2029, 2030].map(y => (
+                                    <option key={y} value={y}>{y}년도 여름</option>
+                                ))}
+                            </select>
+
+                            {/* Month Select */}
+                            <select
+                                value={currentMonth}
+                                onChange={(e) => setCurrentMonth(Number(e.target.value))}
+                                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-extrabold text-slate-700 focus:outline-none"
+                            >
+                                {[6, 7, 8, 9].map(m => (
+                                    <option key={m} value={m}>{m}월</option>
+                                ))}
+                            </select>
+
+                            {/* Export Calendar PNG Button */}
+                            <button
+                                onClick={handleExportCalendarPNG}
+                                className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+                            >
+                                📥 달력 이미지 저장 (PNG)
+                            </button>
+                        </div>
+                    </div>
+
+                    <p className="text-[11px] text-slate-400 mb-4 text-center">💡 원하시는 날짜 칸을 클릭해 여름방학 동안의 가족 여행, 학원 개강, 수영장 방문 등 중요 일정을 메모해 보세요!</p>
+
+                    {/* Weekday Grid Header */}
+                    <div className="grid grid-cols-7 gap-2 text-center text-xs font-black text-slate-500 mb-2">
+                        {['월', '화', '수', '목', '금', '토', '일'].map((w, idx) => (
+                            <div key={idx} className={idx === 5 ? 'text-blue-600' : idx === 6 ? 'text-rose-500' : ''}>
+                                {w}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Days grid of Month */}
+                    <div className="grid grid-cols-7 gap-2 md:gap-3">
+                        {/* Offsets (gray boxes before first day) */}
+                        {[...Array(getFirstDayOffset(currentYear, currentMonth)).keys()].map(offset => (
+                            <div key={`offset-${offset}`} className="bg-slate-50/40 rounded-2xl h-24 md:h-32 border border-slate-50/50"></div>
+                        ))}
+
+                        {/* Calendar Day Slots */}
+                        {[...Array(getDaysInMonth(currentYear, currentMonth)).keys()].map(dayIdx => {
+                            const dayNum = dayIdx + 1;
+                            const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+                            const dayEvents = calendarEvents[dateStr] || [];
+
+                            return (
+                                <div
+                                    key={`day-${dayNum}`}
+                                    onClick={() => handleCalendarDayClick(dayNum)}
+                                    className="bg-white hover:bg-slate-50/80 rounded-2xl p-2 h-24 md:h-32 border border-slate-150 transition-all cursor-pointer flex flex-col justify-between group hover:shadow-md"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs md:text-sm font-black text-slate-700 group-hover:scale-110 transition-transform">
+                                            {dayNum}
+                                        </span>
+                                        <span className="opacity-0 group-hover:opacity-100 text-[10px] font-bold text-sky-500 transition-opacity">
+                                            + 작성
+                                        </span>
+                                    </div>
+
+                                    {/* Embedded Day Tasks list */}
+                                    <div className="flex-1 overflow-y-auto mt-1 space-y-1">
+                                        {dayEvents.map(evt => (
+                                            <div
+                                                key={evt.id}
+                                                style={{ backgroundColor: evt.color }}
+                                                className="px-1.5 py-0.5 rounded text-[9px] md:text-[10px] font-bold flex items-center justify-between text-slate-800 shadow-sm"
+                                            >
+                                                <span className="truncate">{evt.emoji} {evt.title}</span>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteCalendarEvent(dateStr, evt.id);
+                                                    }}
+                                                    className="hover:text-red-600 ml-1 shrink-0 font-bold"
+                                                >
+                                                    &times;
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {}
+            {/* Calendar Event Editor Dialog Modal */}
+            {showEventModal && (
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+                    <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden animate-scaleUp border border-indigo-100">
+                        <div className="bg-gradient-to-r from-sky-500 to-indigo-600 px-5 py-4 flex items-center justify-between text-white">
+                            <h3 className="font-extrabold text-xs">📝 달력 일정 생성 ({selectedDateStr})</h3>
+                            <button
+                                onClick={() => setShowEventModal(false)}
+                                className="text-white hover:text-sky-100 text-lg font-bold"
+                            >
+                                &times;
+                            </button>
+                        </div>
+
+                        <div className="p-5 space-y-4">
+                            <div className="space-y-1.5">
+                                <label className="text-[11px] font-extrabold text-slate-500 block">이 날의 주요 방학 활동</label>
+                                <div className="flex gap-2">
+                                    <select
+                                        value={calendarEventEmoji}
+                                        onChange={(e) => setCalendarEventEmoji(e.target.value)}
+                                        className="px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-lg focus:outline-none cursor-pointer"
+                                    >
+                                        {EMOJI_LIST.map(emo => (
+                                            <option key={emo} value={emo}>{emo}</option>
+                                        ))}
+                                    </select>
+                                    <input
+                                        type="text"
+                                        value={calendarEventTitle}
+                                        onChange={(e) => setCalendarEventTitle(e.target.value)}
+                                        placeholder="예: 가평 계곡 여행 ⛺, 학원 개강일"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                                        maxLength="20"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Color Tag Selection */}
+                            <div className="space-y-1.5">
+                                <label className="text-[11px] font-extrabold text-slate-500 block">메모 테두리 강조색</label>
+                                <div className="grid grid-cols-8 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 justify-items-center">
+                                    {COLOR_PALETTE.map(color => (
+                                        <button
+                                            key={color}
+                                            onClick={() => setCalendarEventColor(color)}
+                                            className={`w-5 h-5 rounded-full transition ${
+                                                calendarEventColor === color ? 'ring-2 ring-indigo-500 scale-110' : 'hover:scale-105'
+                                            }`}
+                                            style={{ backgroundColor: color }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-50 px-5 py-3 flex items-center justify-end gap-2 border-t border-slate-100">
+                            <button
+                                onClick={() => setShowEventModal(false)}
+                                className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[11px] font-bold transition"
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={handleAddCalendarEvent}
+                                className="px-4 py-1.5 bg-sky-500 hover:bg-sky-600 text-white rounded-lg text-[11px] font-bold shadow-sm transition"
+                            >
+                                일정 추가 완료
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {}
+            {/* Plan Clone dialog modal */}
+            {showCopyModal && (
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+                    <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-scaleUp border border-slate-100">
+                        <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between text-white">
+                            <h3 className="font-extrabold text-sm">📋 동일 일과표 요일 복사 적용</h3>
+                            <button
+                                onClick={() => setShowCopyModal(false)}
+                                className="text-white hover:text-indigo-100 text-xl font-bold"
+                            >
+                                &times;
+                            </button>
+                        </div>
+
+                        <div className="p-5 space-y-4">
+                            <p className="text-xs text-slate-500 leading-relaxed">
+                                현재 보고 있는 <span className="font-extrabold text-indigo-600">{selectedDay}요일</span>의 알찬 계획표 정보를 체크하신 대상 요일들에 동일하게 복사합니다.
+                            </p>
+
+                            <div className="grid grid-cols-4 gap-2">
+                                {WEEKDAYS.map(day => {
+                                    if (day === selectedDay) return null;
+                                    const isSelected = copyTargetDays.includes(day);
+                                    return (
+                                        <button
+                                            key={day}
+                                            onClick={() => {
+                                                if (isSelected) {
+                                                    setCopyTargetDays(prev => prev.filter(d => d !== day));
+                                                } else {
+                                                    setCopyTargetDays(prev => [...prev, day]);
+                                                }
+                                            }}
+                                            className={`py-2 rounded-xl font-bold text-xs transition-all border-2 ${
+                                                isSelected
+                                                    ? 'bg-indigo-50 border-indigo-500 text-indigo-700 font-extrabold shadow-sm'
+                                                    : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600'
+                                            }`}
+                                        >
+                                            {day}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="flex gap-2 justify-end">
+                                <button
+                                    onClick={() => setCopyTargetDays(WEEKDAYS.filter(d => d !== selectedDay))}
+                                    className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[10px] font-bold border border-slate-200 transition"
+                                >
+                                    전체 선택
+                                </button>
+                                <button
+                                    onClick={() => setCopyTargetDays([])}
+                                    className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[10px] font-bold border border-slate-200 transition"
+                                >
+                                    모두 취소
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-50 px-5 py-3 flex items-center justify-end gap-2 border-t border-slate-100">
+                            <button
+                                onClick={() => setShowCopyModal(false)}
+                                className="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-bold transition"
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={executeCopyPlan}
+                                className="px-4.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-md transition"
+                            >
+                                계획 복사 실행
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+        </div>
+    );
+}
+
+const container = document.getElementById('root');
+const root = ReactDOM.createRoot(container);
+root.render(<App />);
+</script>
+</body>
+</html>

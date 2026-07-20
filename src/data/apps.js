@@ -1,5 +1,15 @@
 export const apps = [
   {
+    id: "summer-vacation-plan",
+    title: "여름방학 계획서",
+    description:
+      "여름방학 동안의 하루 일과와 주요 일정을 직접 세워보는 계획서 웹앱입니다.",
+    subject: "창체",
+    grade: "공통",
+    tags: ["여름방학", "계획표", "생활계획"],
+    url: "/apps/summer-vacation-plan/",
+  },
+  {
     id: "population-map",
     title: "인구분포 탐구 앱",
     description:
