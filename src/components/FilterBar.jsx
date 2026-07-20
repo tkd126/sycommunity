@@ -36,44 +36,49 @@ export default function FilterBar({
 }) {
   return (
     <section className="filter-bar" aria-label="앱 검색과 필터">
-      <label className="search-box">
-        <Search size={18} aria-hidden="true" />
-        <span className="sr-only">검색어</span>
-        <input
-          type="search"
-          value={searchTerm}
-          onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="앱 제목, 설명, 태그 검색"
-        />
-      </label>
+      <div className="filter-main-row">
+        <label className="search-box">
+          <Search size={18} aria-hidden="true" />
+          <span className="sr-only">검색어</span>
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="앱 제목, 설명, 태그 검색"
+          />
+        </label>
 
-      <label>
-        <span>과목</span>
-        <select
-          value={subject}
-          onChange={(event) => onSubjectChange(event.target.value)}
-        >
+        <label className="grade-select">
+          <span>학년</span>
+          <select
+            value={grade}
+            onChange={(event) => onGradeChange(event.target.value)}
+          >
+            {grades.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="subject-filter" aria-label="과목 선택">
+        <span className="filter-label">과목</span>
+        <div className="subject-buttons" role="list">
           {subjects.map((item) => (
-            <option key={item} value={item}>
+            <button
+              key={item}
+              type="button"
+              className={subject === item ? "selected" : ""}
+              onClick={() => onSubjectChange(item)}
+              aria-pressed={subject === item}
+            >
               {item}
-            </option>
+            </button>
           ))}
-        </select>
-      </label>
-
-      <label>
-        <span>학년</span>
-        <select
-          value={grade}
-          onChange={(event) => onGradeChange(event.target.value)}
-        >
-          {grades.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
-      </label>
+        </div>
+      </div>
     </section>
   );
 }

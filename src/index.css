@@ -479,10 +479,9 @@ main {
 }
 
 .filter-bar {
-  display: grid;
-  grid-template-columns: minmax(260px, 1fr) 180px 180px;
-  gap: 12px;
-  align-items: end;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   margin-bottom: 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -491,13 +490,27 @@ main {
   backdrop-filter: blur(10px);
 }
 
-.filter-bar label {
+.filter-main-row {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 180px;
+  gap: 12px;
+  align-items: end;
+}
+
+.filter-bar label,
+.subject-filter {
   display: flex;
   flex-direction: column;
   gap: 7px;
   color: #374151;
   font-size: 0.92rem;
   font-weight: 800;
+}
+
+.filter-label {
+  color: #374151;
+  font-size: 0.92rem;
+  font-weight: 900;
 }
 
 .search-box {
@@ -532,10 +545,83 @@ main {
   border-color: var(--primary);
 }
 
+.subject-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.subject-buttons button {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #4b5563;
+  padding: 8px 14px;
+  font-size: 0.92rem;
+  font-weight: 900;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.subject-buttons button:hover {
+  border-color: #f5b94c;
+  color: #6b470a;
+  transform: translateY(-1px);
+}
+
+.subject-buttons button.selected {
+  border-color: #f5b94c;
+  background: var(--primary-soft);
+  color: #5f3b00;
+  box-shadow: 0 8px 18px rgba(168, 109, 19, 0.12);
+}
+
 .result-count {
   margin: 0 0 18px;
   color: var(--muted);
   font-weight: 800;
+}
+
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+}
+
+.app-category {
+  scroll-margin-top: 96px;
+}
+
+.category-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+
+.category-heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.category-heading span {
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--primary-dark);
+  border: 1px solid var(--line);
+  padding: 5px 10px;
+  font-size: 0.82rem;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
 .empty-state {
@@ -617,7 +703,7 @@ main {
   }
 
   .hero-grid,
-  .filter-bar {
+  .filter-main-row {
     grid-template-columns: 1fr;
   }
 

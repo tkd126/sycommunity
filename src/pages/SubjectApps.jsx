@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import AppCard from "../components/AppCard.jsx";
-import FilterBar from "../components/FilterBar.jsx";
+import FilterBar, { subjects } from "../components/FilterBar.jsx";
 import { apps } from "../data/apps.js";
 
 export default function SubjectApps() {
@@ -25,6 +25,18 @@ export default function SubjectApps() {
     });
   }, [searchTerm, subject, grade]);
 
+  const groupedApps = useMemo(() => {
+    const subjectOrder = subjects.filter((item) => item !== "전체");
+    const groups = subjectOrder
+      .map((item) => ({
+        subject: item,
+        apps: filteredApps.filter((app) => app.subject === item),
+      }))
+      .filter((group) => group.apps.length > 0);
+
+    return groups;
+  }, [filteredApps]);
+
   return (
     <section className="section-block page-section">
       <div className="container">
@@ -47,10 +59,20 @@ export default function SubjectApps() {
 
         <div className="result-count">총 {filteredApps.length}개 앱</div>
 
-        {filteredApps.length > 0 ? (
-          <div className="card-grid">
-            {filteredApps.map((app) => (
-              <AppCard key={app.id} app={app} />
+        {groupedApps.length > 0 ? (
+          <div className="category-list">
+            {groupedApps.map((group) => (
+              <section className="app-category" key={group.subject}>
+                <div className="category-heading">
+                  <h2>{group.subject}</h2>
+                  <span>{group.apps.length}개 앱</span>
+                </div>
+                <div className="card-grid">
+                  {group.apps.map((app) => (
+                    <AppCard key={app.id} app={app} />
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
         ) : (
