@@ -17,7 +17,7 @@ export default function Header({ currentPage, onNavigate }) {
           <span className="brand-icon" aria-hidden="true">
             책
           </span>
-          <span>바이브 코딩 놀이터</span>
+          <span>초등수업 웹앱 자료실</span>
         </button>
 
         <nav className="nav-menu" aria-label="주요 메뉴">

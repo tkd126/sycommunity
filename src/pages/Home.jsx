@@ -16,7 +16,7 @@ export default function Home({ onNavigate }) {
             <p className="eyebrow">초등 수업용 웹앱 자료실</p>
             <h1>
               <VariableProximity
-                label="바이브 코딩 놀이터"
+                label="초등수업 웹앱 자료실"
                 className="variable-proximity-title"
                 fromFontVariationSettings="'wght' 650, 'opsz' 14"
                 toFontVariationSettings="'wght' 1000, 'opsz' 42"
