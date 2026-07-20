@@ -207,11 +207,15 @@ main {
 
 .intro-text {
   margin: 16px 0 0;
-  max-width: 720px;
+  max-width: 860px;
   color: #374151;
   font-size: 1.05rem;
   line-height: 1.75;
   word-break: keep-all;
+}
+
+.nowrap {
+  white-space: nowrap;
 }
 
 .primary-button {
@@ -225,11 +229,24 @@ main {
   color: #5f3b00;
   padding: 14px 20px;
   font-weight: 800;
+  overflow: visible;
   box-shadow: 0 16px 34px rgba(131, 80, 6, 0.16);
   transition:
     background 150ms ease,
     box-shadow 150ms ease,
     transform 150ms ease;
+}
+
+.variable-proximity-button {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  column-gap: 0.24em;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.primary-button:hover .variable-proximity-letter {
+  color: #3f2700;
 }
 
 .primary-button:hover {

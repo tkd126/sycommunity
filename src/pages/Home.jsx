@@ -7,6 +7,7 @@ import { apps } from "../data/apps.js";
 export default function Home({ onNavigate }) {
   const recentApps = apps.slice(0, 3);
   const titleRef = useRef(null);
+  const buttonRef = useRef(null);
 
   return (
     <>
@@ -29,14 +30,24 @@ export default function Home({ onNavigate }) {
               초등 수업을 더 재미있고 편리하게 만드는 교과 웹앱 모음
             </p>
             <p className="intro-text">
-              직접 만든 수업용 웹앱을 모아두는 공간입니다. 필요한 앱을 클릭하면 새 창에서 바로 사용할 수 있습니다.
+              직접 만든 수업용 웹앱을 모아두는 공간입니다. 필요한 앱을 클릭하면 새 창에서 바로 <span className="nowrap">사용할 수 있습니다.</span>
             </p>
             <button
+              ref={buttonRef}
               className="primary-button"
               type="button"
               onClick={() => onNavigate("apps")}
             >
-              교과 앱 바로가기 <ArrowRight size={18} />
+              <VariableProximity
+                label="교과 앱 바로가기"
+                className="variable-proximity-button"
+                fromFontVariationSettings="'wght' 750, 'opsz' 12"
+                toFontVariationSettings="'wght' 1000, 'opsz' 34"
+                containerRef={buttonRef}
+                radius={78}
+                falloff="linear"
+              />
+              <ArrowRight size={18} />
             </button>
           </div>
         </div>
