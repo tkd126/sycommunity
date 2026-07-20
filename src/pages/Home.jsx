@@ -1,17 +1,30 @@
+import { useRef } from "react";
 import { ArrowRight } from "lucide-react";
 import AppCard from "../components/AppCard.jsx";
+import VariableProximity from "../components/VariableProximity.jsx";
 import { apps } from "../data/apps.js";
 
 export default function Home({ onNavigate }) {
   const recentApps = apps.slice(0, 3);
+  const titleRef = useRef(null);
 
   return (
     <>
       <section className="hero-section">
         <div className="container hero-grid">
-          <div className="hero-copy">
+          <div className="hero-copy" ref={titleRef}>
             <p className="eyebrow">초등 수업용 웹앱 자료실</p>
-            <h1>바이브 코딩 놀이터</h1>
+            <h1>
+              <VariableProximity
+                label="바이브 코딩 놀이터"
+                className="variable-proximity-title"
+                fromFontVariationSettings="'wght' 650, 'opsz' 14"
+                toFontVariationSettings="'wght' 1000, 'opsz' 42"
+                containerRef={titleRef}
+                radius={120}
+                falloff="linear"
+              />
+            </h1>
             <p className="subtitle">
               초등 수업을 더 재미있고 편리하게 만드는 교과 웹앱 모음
             </p>

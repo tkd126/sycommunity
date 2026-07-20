@@ -164,6 +164,34 @@ main {
   letter-spacing: 0;
 }
 
+.variable-proximity-title {
+  display: inline-flex;
+  flex-wrap: wrap;
+  column-gap: 0.28em;
+  row-gap: 0.04em;
+  max-width: 100%;
+  cursor: default;
+}
+
+.variable-proximity-word {
+  display: inline-flex;
+  white-space: nowrap;
+}
+
+.variable-proximity-letter {
+  display: inline-block;
+  transform-origin: 50% 70%;
+  transition:
+    color 160ms ease,
+    font-variation-settings 120ms ease,
+    transform 120ms ease;
+  will-change: font-variation-settings, transform;
+}
+
+.variable-proximity-title:hover .variable-proximity-letter {
+  color: #0f172a;
+}
+
 .subtitle {
   margin: 18px 0 0;
   max-width: 900px;
