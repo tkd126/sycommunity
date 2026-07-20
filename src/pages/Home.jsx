@@ -27,18 +27,6 @@ export default function Home({ onNavigate }) {
               교과 앱 바로가기 <ArrowRight size={18} />
             </button>
           </div>
-
-          <div className="hero-showcase" aria-label="대표 앱 미리보기">
-            <div className="hero-thumbnail">
-              <span>초등 교사 수업 웹앱</span>
-              <strong>바이브 코딩 놀이터</strong>
-              <p>초등학생들을 위한 수업용 도구를 모아둔 교과 웹앱 자료실</p>
-            </div>
-            <div className="showcase-caption">
-              <span>{apps.length}개 수업 앱</span>
-              <strong>초등 수업 웹앱 모음</strong>
-            </div>
-          </div>
         </div>
       </section>
 
