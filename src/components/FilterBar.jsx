@@ -1,5 +1,3 @@
-import { Search } from "lucide-react";
-
 export const subjects = [
   "전체",
   "국어",
@@ -38,7 +36,9 @@ export default function FilterBar({
     <section className="filter-bar" aria-label="앱 검색과 필터">
       <div className="filter-main-row">
         <label className="search-box">
-          <Search size={18} aria-hidden="true" />
+          <span className="search-icon" aria-hidden="true">
+            검색
+          </span>
           <span className="sr-only">검색어</span>
           <input
             type="search"

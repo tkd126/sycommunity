@@ -108,6 +108,8 @@ main {
   border-radius: 8px;
   color: var(--primary-dark);
   background: var(--primary-soft);
+  font-size: 0.86rem;
+  font-weight: 900;
 }
 
 .nav-menu {
@@ -528,11 +530,14 @@ main {
   position: relative;
 }
 
-.search-box svg {
+.search-icon {
   position: absolute;
-  left: 13px;
-  bottom: 13px;
+  left: 12px;
+  bottom: 12px;
   color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0;
 }
 
 .filter-bar input,

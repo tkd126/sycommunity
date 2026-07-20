@@ -1,5 +1,4 @@
 import { useRef } from "react";
-import { ArrowRight } from "lucide-react";
 import AppCard from "../components/AppCard.jsx";
 import VariableProximity from "../components/VariableProximity.jsx";
 import { apps } from "../data/apps.js";
@@ -47,7 +46,9 @@ export default function Home({ onNavigate }) {
                 radius={78}
                 falloff="linear"
               />
-              <ArrowRight size={18} />
+              <span className="button-arrow" aria-hidden="true">
+                →
+              </span>
             </button>
           </div>
         </div>

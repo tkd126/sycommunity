@@ -8,9 +8,64 @@
       content="초등 수업을 더 재미있고 편리하게 만드는 교과 웹앱 모음"
     />
     <title>바이브 코딩 놀이터</title>
+    <style>
+      body {
+        margin: 0;
+        background: linear-gradient(180deg, #fffaf0 0%, #ffffff 72%);
+        color: #111827;
+        font-family:
+          Pretendard,
+          "Noto Sans KR",
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      .static-shell {
+        width: min(960px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 96px 0;
+      }
+
+      .static-shell p {
+        margin: 0 0 12px;
+        color: #835006;
+        font-weight: 800;
+      }
+
+      .static-shell h1 {
+        margin: 0;
+        font-size: clamp(2.5rem, 5vw, 4.5rem);
+        line-height: 1.08;
+      }
+
+      .static-shell strong,
+      .static-shell span {
+        display: block;
+        margin-top: 18px;
+        line-height: 1.7;
+      }
+
+      .static-shell strong {
+        font-size: 1.2rem;
+      }
+
+      .static-shell span {
+        color: #4b5563;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main class="static-shell">
+        <p>초등 수업용 웹앱 자료실</p>
+        <h1>바이브 코딩 놀이터</h1>
+        <strong>초등 수업을 더 재미있고 편리하게 만드는 교과 웹앱 모음</strong>
+        <span>잠시만 기다려 주세요. 수업 웹앱을 불러오고 있습니다.</span>
+      </main>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

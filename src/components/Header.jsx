@@ -1,5 +1,3 @@
-import { BookOpen } from "lucide-react";
-
 const navItems = [
   { id: "home", label: "홈" },
   { id: "apps", label: "교과 앱" },
@@ -17,7 +15,7 @@ export default function Header({ currentPage, onNavigate }) {
           aria-label="홈으로 이동"
         >
           <span className="brand-icon" aria-hidden="true">
-            <BookOpen size={22} />
+            책
           </span>
           <span>바이브 코딩 놀이터</span>
         </button>

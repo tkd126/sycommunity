@@ -1,5 +1,3 @@
-import { ExternalLink } from "lucide-react";
-
 export default function AppCard({ app }) {
   const isReady = Boolean(app.url) && !app.url.includes("example.com");
   const canPreview = isReady;
@@ -47,7 +45,7 @@ export default function AppCard({ app }) {
         <span className={`open-button ${!isReady ? "pending" : ""}`}>
           {isReady ? (
             <>
-              앱 열기 <ExternalLink size={16} />
+              앱 열기 <span aria-hidden="true">↗</span>
             </>
           ) : (
             "준비 중"
