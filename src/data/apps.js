@@ -10,14 +10,37 @@ export const apps = [
     url: "/apps/summer-vacation-plan/",
   },
   {
-    id: "population-map",
-    title: "인구분포 탐구 앱",
+    id: "space-simulation",
+    title: "우주 시뮬레이션",
     description:
-      "우리나라 지역별 인구 분포를 살펴보며 수도권 집중과 지역 불균형을 탐구하는 웹앱입니다.",
+      "태양계 천체의 움직임을 관찰하며 행성과 우주 공간의 특징을 탐구하는 과학 웹앱입니다.",
+    subject: "과학",
+    grade: "5학년",
+    tags: ["우주", "태양계", "행성", "시뮬레이션"],
+    url: "https://singular-mochi-6a7413.netlify.app/",
+    thumbnail: "/thumbnails/space-simulation.png",
+  },
+  {
+    id: "history-map-census",
+    title: "인구 분포 지도 탐구",
+    description:
+      "우리나라 인구 분포를 지도와 자료로 살펴보며 지역별 특징과 인구 이동을 탐구하는 사회 웹앱입니다.",
     subject: "사회",
     grade: "5학년",
-    tags: ["인구분포", "지역불균형", "자료해석"],
-    url: "https://example.com",
+    tags: ["인구분포", "지도", "자료해석", "사회"],
+    url: "https://history-map-census.lovable.app",
+    thumbnail: "/thumbnails/history-map-census.png",
+  },
+  {
+    id: "manitto-picker",
+    title: "마니또 뽑기",
+    description:
+      "학생 이름을 넣으면 자기 자신을 제외하고 서로의 마니또를 무작위로 배정하는 학급 활동 웹앱입니다.",
+    subject: "창체",
+    grade: "전학년",
+    tags: ["마니또", "학급활동", "무작위", "관계맺기"],
+    url: "/apps/manitto/",
+    thumbnail: "/thumbnails/manitto-picker.png",
   },
   {
     id: "health-plan",

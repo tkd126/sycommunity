@@ -1,7 +1,8 @@
 import { ExternalLink } from "lucide-react";
 
 export default function AppCard({ app }) {
-  const isReady = Boolean(app.url);
+  const isReady = Boolean(app.url) && !app.url.includes("example.com");
+  const canPreview = isReady;
 
   return (
     <article className="app-card">
@@ -15,6 +16,23 @@ export default function AppCard({ app }) {
           if (!isReady) event.preventDefault();
         }}
       >
+        <div className="preview-frame" aria-hidden="true">
+          {app.thumbnail ? (
+            <img src={app.thumbnail} alt="" loading="lazy" />
+          ) : canPreview ? (
+            <iframe
+              src={app.url}
+              title={`${app.title} 미리보기`}
+              loading="lazy"
+              tabIndex="-1"
+            />
+          ) : (
+            <div className="preview-placeholder">
+              <span>{app.subject}</span>
+              <strong>{app.title}</strong>
+            </div>
+          )}
+        </div>
         <div className="card-topline">
           <span>{app.subject}</span>
           <span>{app.grade}</span>
