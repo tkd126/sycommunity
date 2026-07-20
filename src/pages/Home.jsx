@@ -30,16 +30,11 @@ export default function Home({ onNavigate }) {
           </div>
 
           <div className="hero-showcase" aria-label="대표 앱 미리보기">
-            {featuredApp?.thumbnail ? (
-              <img src={featuredApp.thumbnail} alt="" />
-            ) : featuredApp ? (
-              <iframe
-                src={featuredApp.url}
-                title={`${featuredApp.title} 미리보기`}
-                loading="lazy"
-                tabIndex="-1"
-              />
-            ) : null}
+            <div className="hero-thumbnail">
+              <span>초등 교사 수업 웹앱</span>
+              <strong>{featuredApp?.title ?? "교과 웹앱 모음"}</strong>
+              <p>초등학생들을 위한 수업용 도구</p>
+            </div>
             <div className="showcase-caption">
               <span>{apps.length}개 수업 앱</span>
               <strong>{featuredApp?.title ?? "교과 웹앱 모음"}</strong>
