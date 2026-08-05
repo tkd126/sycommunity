@@ -1,5 +1,15 @@
 export const apps = [
   {
+    id: "goryeo-history-crossroads",
+    title: "고려 시간 여행: 역사의 갈림길",
+    description:
+      "고려 시대의 중요한 사건 속에서 선택하고, 결과와 해설로 역사를 복습하는 선택형 시뮬레이션 게임입니다.",
+    subject: "사회",
+    grade: "5학년",
+    tags: ["고려", "한국사", "선택형 게임", "역사 복습"],
+    url: "https://goryeo-history-crossroads.vercel.app/",
+  },
+  {
     id: "growth-meal-ai",
     title: "성장 한 끼 AI",
     description:
