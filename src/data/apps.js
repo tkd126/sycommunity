@@ -1,5 +1,15 @@
 export const apps = [
   {
+    id: "basic-writing",
+    title: "바른 글쓰기 활동지",
+    description:
+      "학년 수준에 맞는 낱말과 문장을 세로쓰기 칸에 따라 쓰며 바른 글씨와 글쓰기를 연습하는 활동지 제작 웹앱입니다.",
+    subject: "국어",
+    grade: "공통",
+    tags: ["바른글씨", "세로쓰기", "활동지", "쓰기연습"],
+    url: "https://new-chat-sepia-theta.vercel.app/",
+  },
+  {
     id: "goryeo-history-crossroads",
     title: "고려 시간 여행: 역사의 갈림길",
     description:
