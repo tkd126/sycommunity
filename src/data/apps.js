@@ -1,5 +1,15 @@
 export const apps = [
   {
+    id: "student-record-helper",
+    title: "생기부 도우미",
+    description:
+      "수행평가 자료를 바탕으로 교과 평어, 동아리 활동 기록, 창의적 체험활동 평어를 작성하고 검토하는 교사용 업무 도구입니다.",
+    subject: "창체",
+    grade: "교사용",
+    tags: ["생기부", "교과평어", "동아리활동", "창체", "교사용"],
+    url: "https://student-record-helper-rosy.vercel.app",
+  },
+  {
     id: "basic-writing",
     title: "바른 글쓰기 활동지",
     description:
