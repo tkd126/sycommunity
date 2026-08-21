@@ -1,4 +1,5 @@
-import type { StudentRow } from "@/types/report";
+import type { AreaEvidence, StudentRow } from "@/types/report";
+import type { DocumentAnalysisResponse } from "@/types/documents";
 
 export type TargetMode = "smart" | "selected" | "all";
 
@@ -17,7 +18,7 @@ export const INITIAL_ROWS: StudentRow[] = [
     number: 1,
     name: "김하늘",
     reference: "",
-    evaluation: "1영역 매우 잘함 2영역 잘함 3영역 매우 잘함",
+    evaluation: "",
     comment: "",
   },
   {
@@ -26,7 +27,7 @@ export const INITIAL_ROWS: StudentRow[] = [
     number: 2,
     name: "이가람",
     reference: "",
-    evaluation: "1영역 잘함 2영역 매우 잘함 3영역 잘함",
+    evaluation: "",
     comment: "",
   },
   {
@@ -35,7 +36,7 @@ export const INITIAL_ROWS: StudentRow[] = [
     number: 3,
     name: "박도윤",
     reference: "",
-    evaluation: "1영역 매우 잘함 2영역 보통 3영역 잘함",
+    evaluation: "",
     comment: "",
   },
   {
@@ -44,7 +45,7 @@ export const INITIAL_ROWS: StudentRow[] = [
     number: 4,
     name: "최서윤",
     reference: "",
-    evaluation: "1영역 잘함 2영역 잘함 3영역 매우 잘함",
+    evaluation: "",
     comment: "",
   },
   {
@@ -53,13 +54,43 @@ export const INITIAL_ROWS: StudentRow[] = [
     number: 5,
     name: "정시우",
     reference: "",
-    evaluation: "1영역 보통 2영역 매우 잘함 3영역 잘함",
+    evaluation: "",
     comment: "",
   },
 ];
 
 export function createInitialRows(): StudentRow[] {
   return INITIAL_ROWS.map((row) => ({ ...row }));
+}
+
+export function syncRowsWithAnalysis(
+  currentRows: StudentRow[],
+  analysis: DocumentAnalysisResponse,
+): StudentRow[] {
+  const numbers = new Set(analysis.roster.map((student) => student.studentNumber));
+  for (const area of analysis.areas) {
+    for (const student of area.students) numbers.add(student.studentNumber);
+  }
+
+  const currentByNumber = new Map(currentRows.map((row) => [row.number, row]));
+
+  return [...numbers].sort((a, b) => a - b).map((number) => {
+    const current = currentByNumber.get(number);
+    const evaluation = analysis.areas.map((area) => {
+      const student = area.students.find((item) => item.studentNumber === number);
+      return student?.level ? `${area.areaName} ${student.level}` : "";
+    }).filter(Boolean).join("\n");
+
+    return {
+      id: current?.id ?? `student-${number}`,
+      selected: current?.selected ?? false,
+      number,
+      name: `${number}번 학생`,
+      reference: current?.reference ?? "",
+      evaluation,
+      comment: current?.comment ?? "",
+    };
+  });
 }
 
 export function getTargetIds(rows: StudentRow[], mode: TargetMode): string[] {
@@ -101,8 +132,8 @@ export function applyDummyComments(rows: StudentRow[], targetIds: string[], subj
 }
 
 export function toClipboardText(rows: StudentRow[]): string {
-  const header = ["번호", "성명", "평가결과", "학기말 종합의견"];
-  const body = rows.map((row) => [row.number, row.name, row.evaluation, row.comment]);
+  const header = ["번호", "익명 성명", "과목", "선택된 영역", "영역별 성취 단계", "학기말 종합의견"];
+  const body = rows.map((row) => [row.number, row.name, row.subject ?? "", row.selectedAreas?.join(" ") ?? "", row.evaluation, row.comment]);
   return [header, ...body].map((values) => values.join("\t")).join("\n");
 }
 
@@ -111,7 +142,33 @@ function escapeCsv(value: string | number): string {
 }
 
 export function toCsv(rows: StudentRow[]): string {
-  const header = ["번호", "성명", "평가결과", "학기말 종합의견"];
-  const body = rows.map((row) => [row.number, row.name, row.evaluation, row.comment]);
+  const header = ["번호", "익명 성명", "과목", "선택된 영역", "영역별 성취 단계", "학기말 종합의견"];
+  const body = rows.map((row) => [row.number, row.name, row.subject ?? "", row.selectedAreas?.join(" ") ?? "", row.evaluation, row.comment]);
   return `\uFEFF${[header, ...body].map((values) => values.map(escapeCsv).join(",")).join("\r\n")}`;
+}
+
+export function resizeAreaEvidence(current: AreaEvidence[], count: number): AreaEvidence[] {
+  const safeCount = Math.min(5, Math.max(1, count));
+  if (current.length >= safeCount) return current.slice(0, safeCount);
+
+  const additions = Array.from({ length: safeCount - current.length }, (_, index) => ({
+    id: `area-${current.length + index + 1}`,
+    name: "",
+    file: null,
+  }));
+  return [...current, ...additions];
+}
+
+export function isPdfFile(file: File): boolean {
+  return file.name.toLowerCase().endsWith(".pdf");
+}
+
+export function isAllowedDocument(file: File): boolean {
+  return [".hwp", ".hwpx", ".pdf"].some((extension) => file.name.toLowerCase().endsWith(extension));
+}
+
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return "0 KB";
+  if (bytes < 1024 * 1024) return `${Math.round((bytes / 1024) * 10) / 10} KB`;
+  return `${Math.round((bytes / (1024 * 1024)) * 10) / 10} MB`;
 }

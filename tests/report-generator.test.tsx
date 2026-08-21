@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -33,7 +33,7 @@ const fetchImplementation = async (input: RequestInfo | URL, init?: RequestInit)
   }
   if (url.endsWith("/api/generate-report")) {
     const body = JSON.parse(String(init?.body));
-    return new Response(JSON.stringify({
+    const generated = {
       subject: body.subject,
       warning: "",
       rows: body.students.map((student: { studentNumber: number }) => ({
@@ -42,7 +42,15 @@ const fetchImplementation = async (input: RequestInfo | URL, init?: RequestInit)
         comment: "평가 내용을 바탕으로 자신의 생각을 자연스럽게 표현함.",
       })),
       usage: { amountKrw: 1001, budgetKrw: 30000 },
-    }));
+    };
+    if (new Headers(init?.headers).get("accept")?.includes("application/x-ndjson")) {
+      return new Response([
+        JSON.stringify({ type: "progress", completed: generated.rows.length, total: generated.rows.length, rows: generated.rows }),
+        JSON.stringify({ type: "complete", completed: generated.rows.length, failed: 0, total: generated.rows.length, usage: generated.usage }),
+        "",
+      ].join("\n"), { headers: { "content-type": "application/x-ndjson" } });
+    }
+    return new Response(JSON.stringify(generated));
   }
   throw new Error(`Unexpected fetch: ${url}`);
 };
@@ -71,6 +79,14 @@ describe("ReportGenerator", () => {
     fetchMock.mockReset();
     fetchMock.mockImplementation(fetchImplementation);
     vi.stubGlobal("fetch", fetchMock);
+  });
+
+  it("첨부 자료 분석 버튼을 교사 접근 비밀번호와 같은 설정 줄에 표시한다", () => {
+    render(<ReportGenerator />);
+
+    const accessActions = screen.getByRole("group", { name: "분석 및 접근 설정" });
+    expect(within(accessActions).getByLabelText("교사 접근 비밀번호")).toBeInTheDocument();
+    expect(within(accessActions).getByRole("button", { name: "첨부 자료 분석" })).toBeInTheDocument();
   });
 
   it("초기에는 조회 조건과 학생 표 없이 과목별 파일 작업공간을 표시한다", () => {
@@ -114,6 +130,8 @@ describe("ReportGenerator", () => {
 
     const comment = screen.getByLabelText("1번 학생 학기말 종합의견");
     expect((comment as HTMLTextAreaElement).value).toContain("평가 내용을 바탕으로");
+    expect(screen.getByRole("progressbar", { name: "평어 생성 진행률" })).toHaveTextContent("6/6명");
+    expect(screen.getByRole("progressbar", { name: "평어 생성 진행률" })).toHaveTextContent("100%");
     const generationCall = fetchMock.mock.calls.find(([url]) => String(url).endsWith("/api/generate-report"));
     expect(String(generationCall?.[1]?.body)).not.toContain("김하늘");
     fireEvent.change(comment, { target: { value: "교사가 수정한 평어" } });
@@ -132,16 +150,67 @@ describe("ReportGenerator", () => {
     expect(screen.queryByRole("button", { name: "선택 삭제" })).not.toBeInTheDocument();
   }, 10_000);
 
-  it("비밀번호가 입력된 상태에서 첨부 자료를 분석하면 전체 학생 평어 생성을 바로 요청한다", async () => {
+  it("비밀번호가 입력되어도 첨부 자료 분석 뒤에는 자동 생성하지 않고 생성 버튼을 바로 활성화한다", async () => {
     render(<ReportGenerator />);
     const user = userEvent.setup();
     await user.type(screen.getByLabelText("교사 접근 비밀번호"), "teacher-password");
     await fillAreaEvidence(user);
     await user.click(screen.getByRole("button", { name: "첨부 자료 분석" }));
 
-    expect(await screen.findByLabelText("1번 학생 학기말 종합의견")).toHaveValue("평가 내용을 바탕으로 자신의 생각을 자연스럽게 표현함.");
+    expect(await screen.findByLabelText("1번 학생 학기말 종합의견")).toHaveValue("");
     const generationCalls = fetchMock.mock.calls.filter(([url]) => String(url).endsWith("/api/generate-report"));
-    expect(generationCalls).toHaveLength(1);
+    expect(generationCalls).toHaveLength(0);
+    expect(screen.getByRole("button", { name: "교과평어 생성" })).toBeEnabled();
+  }, 10_000);
+
+  it("첨부 자료 분석 중 실제 완료 파일 수와 퍼센트를 표시한다", async () => {
+    const defaultFetch = fetchMock.getMockImplementation()!;
+    let streamController!: ReadableStreamDefaultController<Uint8Array>;
+    const encoder = new TextEncoder();
+    fetchMock.mockImplementation((input, init) => {
+      if (!String(input).endsWith("/api/parse-documents")) return defaultFetch(input, init);
+      return Promise.resolve(new Response(new ReadableStream<Uint8Array>({
+        start(controller) {
+          streamController = controller;
+          controller.enqueue(encoder.encode(`${JSON.stringify({
+            type: "progress",
+            percent: 67,
+            completedFiles: 4,
+            totalFiles: 6,
+            stage: "영역별 평가 결과 분석 완료",
+          })}\n`));
+        },
+      }), { headers: { "content-type": "application/x-ndjson" } }));
+    });
+
+    render(<ReportGenerator />);
+    const user = userEvent.setup();
+    await fillAreaEvidence(user);
+    await user.click(screen.getByRole("button", { name: "첨부 자료 분석" }));
+
+    expect(await screen.findByRole("button", { name: /분석 중 67% · 4\/6개 파일/ })).toBeDisabled();
+
+    await act(async () => {
+      streamController.enqueue(encoder.encode(`${JSON.stringify({
+        type: "result",
+        status: 200,
+        data: {
+          roster: [{ studentNumber: 1 }],
+          areas: AREA_NAMES.map((areaName, index) => ({
+            areaId: `area-${index + 1}`,
+            areaName,
+            students: [{ studentNumber: 1, level: index === 0 ? "매우 잘함" : "잘함", rawLevel: "잘함", confirmed: true }],
+            warnings: [],
+          })),
+          evaluationPlanText: "",
+          worksheetText: "",
+          warnings: [],
+        },
+      })}\n`));
+      streamController.close();
+    });
+
+    expect(await screen.findByText("Total 1")).toBeInTheDocument();
   }, 10_000);
 
   it("별도 확인 패널 없이 최종 표에서 영역별 성취 단계를 바로 표시한다", async () => {
@@ -164,6 +233,21 @@ describe("ReportGenerator", () => {
 
     expect(screen.getByLabelText("1번 학생 학기말 종합의견")).toHaveValue("");
     expect((screen.getByLabelText("2번 학생 학기말 종합의견") as HTMLTextAreaElement).value).toContain("평가 내용을 바탕으로");
+  }, 10_000);
+
+  it("표 머리글에서 전체 학생을 선택하거나 해제한다", async () => {
+    render(<ReportGenerator />);
+    await fillRequiredInputs();
+
+    const user = userEvent.setup();
+    const headerSelection = screen.getByRole("checkbox", { name: "교과 전체 학생 선택" });
+    await user.click(headerSelection);
+    expect(screen.getByLabelText("1번 학생 선택")).toBeChecked();
+    expect(screen.getByLabelText("2번 학생 선택")).toBeChecked();
+    await user.click(headerSelection);
+    expect(screen.getByLabelText("1번 학생 선택")).not.toBeChecked();
+    expect(screen.getByLabelText("2번 학생 선택")).not.toBeChecked();
+    expect(screen.queryByRole("group", { name: "선택 관리" })).not.toBeInTheDocument();
   }, 10_000);
 
   it("기본 생성 버튼은 선택된 학생이 있으면 선택 학생만 생성한다", async () => {
@@ -308,7 +392,7 @@ describe("ReportGenerator", () => {
       new File(["old"], "old-plan.hwp", { type: "application/octet-stream" }),
     );
     await user.click(screen.getByRole("button", { name: "첨부 자료 분석" }));
-    expect(await screen.findByRole("button", { name: "자료 분석 중" })).toBeDisabled();
+    expect(await screen.findByRole("button", { name: /분석 중 5% · 0\/5개 파일/ })).toBeDisabled();
 
     await user.upload(
       screen.getByLabelText("전체 평가 계획 파일"),
@@ -387,6 +471,62 @@ describe("ReportGenerator", () => {
       "간결형",
       "구체적 서술형",
     ]);
+  });
+
+  it("새로고침과 같은 재마운트 뒤에도 익명 분석 결과와 평어 작성 상태를 복원한다", async () => {
+    const firstView = render(<ReportGenerator />);
+    const user = await fillRequiredInputs();
+    await user.clear(screen.getByLabelText("추가 지시사항"));
+    await user.type(screen.getByLabelText("추가 지시사항"), "간결하고 구체적으로 작성");
+    await user.click(screen.getByRole("button", { name: "전체 학생 생성" }));
+
+    expect((await screen.findAllByDisplayValue(/평가 내용을 바탕으로/)).length).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(sessionStorage.getItem("student-record-helper:report-workspace:v1")).not.toBeNull();
+    });
+
+    const stored = sessionStorage.getItem("student-record-helper:report-workspace:v1") ?? "";
+    expect(stored).toContain("간결하고 구체적으로 작성");
+    expect(stored).not.toContain("teacher-password");
+    expect(stored).not.toContain("문학-평가결과.pdf");
+    expect(stored).not.toContain("File");
+
+    firstView.unmount();
+    render(<ReportGenerator />);
+
+    expect(await screen.findByText("Total 6")).toBeInTheDocument();
+    expect(screen.getByLabelText("추가 지시사항")).toHaveValue("간결하고 구체적으로 작성");
+    expect((screen.getByLabelText("1번 학생 학기말 종합의견") as HTMLTextAreaElement).value).toContain("평가 내용을 바탕으로");
+    expect(screen.getByLabelText("교사 접근 비밀번호")).toHaveValue("");
+  }, 15_000);
+
+  it("구조가 손상된 교과 세션은 복원하지 않고 안전한 초기 화면을 표시한다", () => {
+    sessionStorage.setItem("student-record-helper:report-workspace:v1", JSON.stringify({
+      version: 1,
+      value: {
+        subject: "국어",
+        selectedExample: "positive",
+        example: "예시",
+        instruction: "",
+        workspaces: {
+          국어: {
+            areaCount: 3,
+            analysis: {
+              roster: [{ studentNumber: 1 }],
+              areas: [null],
+              evaluationPlanText: "",
+              worksheetText: "",
+              warnings: [],
+            },
+            rows: [{ id: "broken", number: 1, comment: "손상", selectedAreas: [] }],
+          },
+        },
+      },
+    }));
+
+    expect(() => render(<ReportGenerator />)).not.toThrow();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(screen.getByText("과목을 선택하고 평가결과 PDF를 등록해 주세요.")).toBeInTheDocument();
   });
 
 });

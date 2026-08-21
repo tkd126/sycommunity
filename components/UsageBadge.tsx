@@ -1,10 +1,13 @@
 type UsageBadgeProps = {
   amountKrw: number;
   budgetKrw: number;
+  status?: "normal" | "warning" | "limit";
 };
 
-export function UsageBadge({ amountKrw, budgetKrw }: UsageBadgeProps) {
-  const status = amountKrw >= budgetKrw ? "limit" : amountKrw >= 27000 ? "warning" : "normal";
+export function UsageBadge({ amountKrw, budgetKrw, status: providedStatus }: UsageBadgeProps) {
+  const status =
+    providedStatus ??
+    (amountKrw >= budgetKrw ? "limit" : amountKrw >= budgetKrw * 0.9 ? "warning" : "normal");
   const label = status === "limit" ? "사용 제한" : status === "warning" ? "주의" : null;
 
   return (

@@ -1,4 +1,5 @@
 export const CREATIVE_CATEGORIES = ["창체", "자율", "봉사", "진로"] as const;
+export const MAX_CREATIVE_GENERATION_ROWS = 50;
 
 export type CreativeCategory = (typeof CREATIVE_CATEGORIES)[number];
 

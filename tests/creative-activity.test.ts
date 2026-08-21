@@ -1,13 +1,27 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  chooseSpecificCreativeActivity,
   normalizeCreativeActivities,
   normalizeCreativeCategory,
   normalizeCreativeDate,
+  parseCreativeTimetableLocally,
   sanitizeCreativeComment,
 } from "@/lib/creative-activity";
 
 describe("creative activity normalization", () => {
+  it("uses the more specific item when comma-separated activities describe the same topic", () => {
+    expect(chooseSpecificCreativeActivity("학교폭력예방교육, 사이버 학교 폭력 교육"))
+      .toBe("사이버 학교 폭력 교육");
+    expect(chooseSpecificCreativeActivity("국악교육6, 단소 배우기 국악교육"))
+      .toBe("단소 배우기 국악교육");
+  });
+
+  it("keeps different comma-separated activities together", () => {
+    expect(chooseSpecificCreativeActivity("개인위생교육, 학급자치회선출"))
+      .toBe("개인위생교육, 학급자치회선출");
+  });
+
   it.each([
     ["창체", "창체"],
     [" 자 율 ", "자율"],
@@ -31,6 +45,9 @@ describe("creative activity normalization", () => {
     ["4-7", "4/7"],
     ["4월 7일", "4/7"],
     ["4.7(수)", "4/7"],
+    ["3. 4.(수)", "3/4"],
+    ["2026.3.4", "3/4"],
+    ["2026년 3월 4일", "3/4"],
     [" 4월 7일 ", "4/7"],
     ["4.7(확인 필요)", null],
     ["4.7(미상)", null],
@@ -127,6 +144,43 @@ describe("creative activity normalization", () => {
   });
 });
 
+describe("creative timetable local parsing", () => {
+  it("표준 연간시간표의 날짜·창체 과목을 로컬에서 연결하고 동아리는 제외한다", () => {
+    const text = [
+      "교육과정 연간시간운영계획",
+      "2026학년도 1학기",
+      "1",
+      "3. 2- 3. 6",
+      "5",
+      "국", "국", "수", "수", "과", "과",
+      "자", "국", "수", "사", "과", "미",
+      "국", "수", "사", "과", "영", "체",
+      "국", "수", "사", "과", "영", "체",
+      "자", "국", "수", "사", "미",
+      "3.3(화) 학교폭력예방교육",
+      "3.6(금) 학급자치회선출",
+      "3.6(금) 동아리 1",
+    ].join("\n");
+
+    const rows = parseCreativeTimetableLocally(text);
+
+    expect(rows?.map(({ date, category, activity, hours, needsReview }) => ({
+      date,
+      category,
+      activity,
+      hours,
+      needsReview,
+    }))).toEqual([
+      { date: "3/3", category: "자율", activity: "학교폭력예방교육", hours: 1, needsReview: false },
+      { date: "3/6", category: "자율", activity: "학급자치회선출", hours: 1, needsReview: false },
+    ]);
+  });
+
+  it("표준 시간표 표제를 찾지 못하면 기존 분석기로 넘길 수 있도록 null을 반환한다", () => {
+    expect(parseCreativeTimetableLocally("3.3(화) 학교폭력예방교육")).toBeNull();
+  });
+});
+
 describe("creative activity comment sanitization", () => {
   it("turns the diversity sentence into a natural Korean noun-ending sentence", () => {
     expect(sanitizeCreativeComment("다문화교육을 통해 diversity를 이해했습니다!"))
@@ -178,6 +232,8 @@ describe("creative activity comment sanitization", () => {
     ["생각을 나눕니다.", "생각을 나눔."],
     ["작품을 봅니다.", "작품을 봄."],
     ["정답이 아닙니다.", "정답이 아님."],
+    ["작품을 만듭니다.", "작품을 만듦."],
+    ["함께 놉니다.", "함께 놂."],
   ])("safely converts common -ㅂ니다 endings in %s", (source, expected) => {
     const comment = sanitizeCreativeComment(source);
 

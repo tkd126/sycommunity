@@ -14,10 +14,18 @@
     "test:run": "vitest run"
   },
   "dependencies": {
+    "@next-auth/prisma-adapter": "^1.0.7",
+    "@prisma/client": "^6.19.3",
+    "@ssabrojs/hwpxjs": "^0.4.0",
+    "jszip": "3.10.1",
     "next": "^16.1.6",
+    "next-auth": "^4.24.14",
+    "openai": "^6.45.0",
+    "pdfjs-dist": "^6.1.200",
     "pretendard": "^1.3.9",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.0",
@@ -28,6 +36,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "jsdom": "^27.0.0",
+    "prisma": "^6.19.3",
     "tailwindcss": "^4.1.0",
     "typescript": "^5.9.0",
     "vitest": "^4.0.0"

@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UsageEvent {
+  id           String   @id @default(cuid())
+  inputTokens  Int
+  outputTokens Int
+  costKrw      Int
+  model        String
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model User {
+  id                 String             @id @default(cuid())
+  name               String?
+  email              String?            @unique
+  emailVerified      DateTime?
+  image              String?
+  role               UserRole           @default(teacher)
+  subscriptionStatus SubscriptionStatus @default(pending)
+  accounts           Account[]
+  sessions           Session[]
+  savedReports       SavedReport[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+model SavedReport {
+  id         String           @id @default(cuid())
+  userId     String
+  title      String
+  subject    String
+  schoolYear String?
+  semester   String?
+  grade      String?
+  className  String?
+  rows       SavedReportRow[]
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([userId, updatedAt])
+}
+
+model SavedReportRow {
+  id            String      @id @default(cuid())
+  savedReportId String
+  studentNumber Int
+  anonymousName String
+  subject       String
+  areaLevels    Json
+  selectedAreas Json
+  comment       String      @db.Text
+  savedReport   SavedReport @relation(fields: [savedReportId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([savedReportId, studentNumber])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+enum UserRole {
+  teacher
+  admin
+}
+
+enum SubscriptionStatus {
+  pending
+  active
+  suspended
+  expired
+}

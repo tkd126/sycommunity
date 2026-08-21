@@ -3,5 +3,8 @@ node_modules/
 *.tsbuildinfo
 .superpowers/
 .worktrees/
+.gstack/
+tmp/
+서버실행.ps1
 .env*
 !.env.example

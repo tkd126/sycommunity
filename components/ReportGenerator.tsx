@@ -1,10 +1,12 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 
 import { FileDropzone } from "@/components/FileDropzone";
+import { HeaderSelectionCheckbox } from "@/components/HeaderSelectionCheckbox";
 import { UsageBadge } from "@/components/UsageBadge";
 import { selectBalancedAreas } from "@/lib/area-selection";
+import { proofreadInBatches } from "@/lib/proofread-client";
 import { getTargetIds, isAllowedDocument, isPdfFile, toClipboardText, toCsv, type TargetMode } from "@/lib/report-ui";
 import { readSessionValue, removeSessionValue, writeSessionValue } from "@/lib/session-storage";
 import { ACHIEVEMENT_LEVELS, type AchievementLevel, type DocumentAnalysisResponse, type SharedEvaluationPlan } from "@/types/documents";
@@ -13,8 +15,67 @@ import type { Notice, StudentRow } from "@/types/report";
 const SUBJECTS = ["국어", "수학", "사회", "과학", "영어", "음악", "미술", "체육", "실과", "도덕"] as const;
 type Subject = (typeof SUBJECTS)[number];
 
+type GeneratedReportRow = {
+  studentNumber: number;
+  selectedLevels: string;
+  comment: string;
+};
+
+type GenerationProgress = {
+  completed: number;
+  total: number;
+  elapsedSeconds: number;
+};
+
+type AnalysisProgress = {
+  percent: number;
+  completedFiles: number;
+  totalFiles: number;
+  stage: string;
+};
+
+async function readAnalysisResponse(
+  response: Response,
+  onProgress: (progress: AnalysisProgress) => void,
+): Promise<{ status: number; data: unknown }> {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/x-ndjson")) {
+    return { status: response.status, data: await response.json() };
+  }
+  if (!response.body) throw new Error("문서 분석 응답을 읽지 못했습니다.");
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let result: { status: number; data: unknown } | null = null;
+  const consume = (line: string) => {
+    if (!line.trim()) return;
+    const event = JSON.parse(line) as ({ type: "progress" } & AnalysisProgress) | {
+      type: "result";
+      status: number;
+      data: unknown;
+    };
+    if (event.type === "progress") onProgress(event);
+    if (event.type === "result") result = { status: event.status, data: event.data };
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    lines.forEach(consume);
+    if (done) break;
+  }
+  consume(buffer);
+  if (!result) throw new Error("문서 분석 결과를 확인하지 못했습니다.");
+  return result;
+}
+
 const SHARED_EVALUATION_PLAN_SESSION_KEY = "student-record-helper:evaluation-plan:v1";
 const SHARED_EVALUATION_PLAN_SESSION_VERSION = 1;
+const REPORT_WORKSPACE_SESSION_KEY = "student-record-helper:report-workspace:v1";
+const REPORT_WORKSPACE_SESSION_VERSION = 1;
 
 function isSharedEvaluationPlan(value: unknown): value is SharedEvaluationPlan {
   return typeof value === "object"
@@ -44,6 +105,74 @@ type SubjectWorkspace = {
   analysis: DocumentAnalysisResponse | null;
   rows: StudentRow[];
 };
+
+type StoredSubjectWorkspace = Pick<SubjectWorkspace, "areaCount" | "analysis" | "rows">;
+type ReportWorkspaceSession = {
+  subject: Subject;
+  workspaces: Partial<Record<Subject, StoredSubjectWorkspace>>;
+  selectedExample: string;
+  example: string;
+  instruction: string;
+};
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function isStoredAnalysis(value: unknown): value is DocumentAnalysisResponse {
+  if (typeof value !== "object" || value === null) return false;
+  const analysis = value as Partial<DocumentAnalysisResponse>;
+  return Array.isArray(analysis.roster)
+    && analysis.roster.every((student) => Number.isInteger(student.studentNumber))
+    && Array.isArray(analysis.areas)
+    && analysis.areas.every((area) => (
+      typeof area.areaId === "string"
+      && typeof area.areaName === "string"
+      && isStringArray(area.warnings)
+      && Array.isArray(area.students)
+      && area.students.every((student) => (
+        Number.isInteger(student.studentNumber)
+        && (student.level === "" || ACHIEVEMENT_LEVELS.includes(student.level))
+        && typeof student.rawLevel === "string"
+        && typeof student.confirmed === "boolean"
+      ))
+    ))
+    && typeof analysis.evaluationPlanText === "string"
+    && typeof analysis.worksheetText === "string"
+    && isStringArray(analysis.warnings);
+}
+
+function isStoredRow(value: unknown): value is StudentRow {
+  if (typeof value !== "object" || value === null) return false;
+  const row = value as Partial<StudentRow>;
+  return typeof row.id === "string"
+    && typeof row.selected === "boolean"
+    && Number.isInteger(row.number)
+    && typeof row.name === "string"
+    && typeof row.reference === "string"
+    && typeof row.evaluation === "string"
+    && typeof row.comment === "string"
+    && (row.subject === undefined || typeof row.subject === "string")
+    && isStringArray(row.selectedAreas);
+}
+
+function isReportWorkspaceSession(value: unknown): value is ReportWorkspaceSession {
+  if (typeof value !== "object" || value === null) return false;
+  const candidate = value as Partial<ReportWorkspaceSession>;
+  if (!SUBJECTS.includes(candidate.subject as Subject)) return false;
+  if (typeof candidate.selectedExample !== "string" || typeof candidate.example !== "string" || typeof candidate.instruction !== "string") return false;
+  if (typeof candidate.workspaces !== "object" || candidate.workspaces === null) return false;
+  return Object.values(candidate.workspaces).every((workspace) => (
+    typeof workspace === "object"
+    && workspace !== null
+    && Number.isInteger(workspace.areaCount)
+    && workspace.areaCount >= 1
+    && workspace.areaCount <= 10
+    && (workspace.analysis === null || isStoredAnalysis(workspace.analysis))
+    && Array.isArray(workspace.rows)
+    && workspace.rows.every(isStoredRow)
+  ));
+}
 
 type SavedReportSummary = {
   id: string;
@@ -108,24 +237,92 @@ function buildRows(subject: Subject, analysis: DocumentAnalysisResponse, areaCou
 }
 
 export function ReportGenerator() {
-  const [subject, setSubject] = useState<Subject>("국어");
-  const [workspaces, setWorkspaces] = useState(createWorkspaces);
+  const [initialSession] = useState(() => readSessionValue(
+    REPORT_WORKSPACE_SESSION_KEY,
+    REPORT_WORKSPACE_SESSION_VERSION,
+    isReportWorkspaceSession,
+  ));
+  const [subject, setSubject] = useState<Subject>(initialSession?.subject ?? "국어");
+  const [workspaces, setWorkspaces] = useState(() => {
+    const defaults = createWorkspaces();
+    if (!initialSession) return defaults;
+    for (const item of SUBJECTS) {
+      const stored = initialSession.workspaces[item];
+      if (stored) defaults[item] = { worksheets: [], resultFiles: [], ...stored };
+    }
+    return defaults;
+  });
   const [pendingEvaluationPlan, setPendingEvaluationPlan] = useState<File | null>(null);
   const [sharedEvaluationPlan, setSharedEvaluationPlan] = useState<SharedEvaluationPlan | null>(() =>
     readSessionValue(SHARED_EVALUATION_PLAN_SESSION_KEY, SHARED_EVALUATION_PLAN_SESSION_VERSION, isSharedEvaluationPlan));
-  const [selectedExample, setSelectedExample] = useState("positive");
-  const [example, setExample] = useState<string>(EXAMPLE_PRESETS[0].text);
-  const [instruction, setInstruction] = useState("");
+  const [selectedExample, setSelectedExample] = useState(initialSession?.selectedExample ?? "positive");
+  const [example, setExample] = useState<string>(initialSession?.example ?? EXAMPLE_PRESETS[0].text);
+  const [instruction, setInstruction] = useState(initialSession?.instruction ?? "");
   const [password, setPassword] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisElapsedSeconds, setAnalysisElapsedSeconds] = useState(0);
+  const [analysisProgress, setAnalysisProgress] = useState<AnalysisProgress | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isProofreading, setIsProofreading] = useState(false);
+  const [proofreadBackup, setProofreadBackup] = useState<{ subject: Subject; comments: Map<string, string> } | null>(null);
+  const [generationProgress, setGenerationProgress] = useState<GenerationProgress | null>(null);
   const [usage, setUsage] = useState({ amountKrw: 0, budgetKrw: 30_000, status: "normal" as "normal" | "warning" | "limit" });
   const [notice, setNotice] = useState<Notice>({ type: "info", message: "과목을 선택하고 평가결과 PDF를 등록해 주세요." });
   const [savedReports, setSavedReports] = useState<SavedReportSummary[]>([]);
   const [selectedSavedReportId, setSelectedSavedReportId] = useState("");
   const [isSavingReport, setIsSavingReport] = useState(false);
   const [isLoadingSavedReports, setIsLoadingSavedReports] = useState(false);
+  const [hasLoadedSavedReports, setHasLoadedSavedReports] = useState(false);
   const workspace = workspaces[subject];
+  const selectedRowCount = workspace.rows.filter((row) => row.selected).length;
+  const analysisFileCount = workspace.resultFiles.length
+    + workspace.worksheets.length
+    + (pendingEvaluationPlan ? 1 : 0);
+
+  useEffect(() => {
+    if (!isAnalyzing) return;
+    const timer = window.setInterval(() => {
+      setAnalysisElapsedSeconds((seconds) => seconds + 1);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [isAnalyzing]);
+
+  useEffect(() => {
+    if (!isGenerating) return;
+    const timer = window.setInterval(() => {
+      setGenerationProgress((progress) => progress
+        ? { ...progress, elapsedSeconds: progress.elapsedSeconds + 1 }
+        : progress);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [isGenerating]);
+
+  useEffect(() => {
+    const safeWorkspaces = SUBJECTS.reduce((result, item) => {
+      const current = workspaces[item];
+      result[item] = {
+        areaCount: current.areaCount,
+        analysis: current.analysis,
+        rows: current.rows.map((row) => ({
+          ...row,
+          name: `${row.number}번 학생`,
+          reference: "",
+        })),
+      };
+      return result;
+    }, {} as Record<Subject, StoredSubjectWorkspace>);
+    try {
+      writeSessionValue(REPORT_WORKSPACE_SESSION_KEY, REPORT_WORKSPACE_SESSION_VERSION, {
+        subject,
+        workspaces: safeWorkspaces,
+        selectedExample,
+        example,
+        instruction,
+      } satisfies ReportWorkspaceSession);
+    } catch {
+      // Storage quota or browser policy must not interrupt the current work.
+    }
+  }, [example, instruction, selectedExample, subject, workspaces]);
 
   useEffect(() => {
     let active = true;
@@ -136,20 +333,6 @@ export function ReportGenerator() {
       })
       .then((data) => { if (active) setUsage(data); })
       .catch(() => { if (active) setNotice({ type: "error", message: "이번 달 사용량을 확인하지 못했습니다." }); });
-    return () => { active = false; };
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-    setIsLoadingSavedReports(true);
-    fetch("/api/saved-reports")
-      .then(async (response) => {
-        if (!response.ok) throw new Error("saved reports");
-        return response.json();
-      })
-      .then((data) => { if (active) setSavedReports(data.reports ?? []); })
-      .catch(() => { if (active) setNotice({ type: "error", message: "저장본 목록을 불러오지 못했습니다." }); })
-      .finally(() => { if (active) setIsLoadingSavedReports(false); });
     return () => { active = false; };
   }, []);
 
@@ -203,17 +386,23 @@ export function ReportGenerator() {
     if (planFileForRequest) form.append("evaluationPlan", planFileForRequest);
     workspace.worksheets.forEach((file) => form.append("worksheets", file));
 
+    setAnalysisElapsedSeconds(0);
+    setAnalysisProgress({ percent: 5, completedFiles: 0, totalFiles: analysisFileCount, stage: "첨부 파일 확인 중" });
     setIsAnalyzing(true);
     try {
-      const response = await fetch("/api/parse-documents", { method: "POST", body: form });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.message ?? "문서 분석에 실패했습니다.");
+      const response = await fetch("/api/parse-documents", {
+        method: "POST",
+        body: form,
+        headers: { accept: "application/x-ndjson" },
+      });
+      const parsedResponse = await readAnalysisResponse(response, setAnalysisProgress);
+      const body = parsedResponse.data as { message?: string } & Partial<DocumentAnalysisResponse>;
+      if (parsedResponse.status < 200 || parsedResponse.status >= 300) throw new Error(body.message ?? "문서 분석에 실패했습니다.");
       const analysis = body as DocumentAnalysisResponse;
       const unnamed = analysis.areas.filter((area) => !area.areaName).length;
       if (unnamed > 0) throw new Error(`${unnamed}개 파일에서 영역명을 확인하지 못했습니다. 파일 내용을 확인해 주세요.`);
-      let activeSharedEvaluationPlan = sharedEvaluationPlan;
       if (planFileForRequest) {
-        activeSharedEvaluationPlan = {
+        const activeSharedEvaluationPlan = {
           fileName: planFileForRequest.name,
           extractedText: analysis.evaluationPlanText,
           analyzedAt: new Date().toISOString(),
@@ -228,16 +417,15 @@ export function ReportGenerator() {
       }
       const rows = buildRows(subject, analysis, workspace.areaCount, workspace.rows);
       updateWorkspace({ analysis, rows });
-      if (password.trim()) {
-        setNotice({ type: "info", message: "첨부 자료 분석을 마쳤습니다. 전체 학생 평어를 바로 생성합니다." });
-        await generateFrom(analysis, rows, "all", activeSharedEvaluationPlan?.extractedText ?? "");
-      } else {
-        setNotice({ type: "success", message: `${analysis.areas.length}개 영역과 ${rows.length}명의 익명 평가결과를 분석했습니다. 교사 접근 비밀번호를 입력하면 평어를 생성할 수 있습니다.` });
-      }
+      setNotice({
+        type: "success",
+        message: `${analysisFileCount}개 파일 분석 완료 · 학생 ${rows.length}명 · 영역 ${analysis.areas.length}개`,
+      });
     } catch (error) {
       setNotice({ type: "error", message: error instanceof Error ? error.message : "문서 분석에 실패했습니다." });
     } finally {
       setIsAnalyzing(false);
+      setAnalysisProgress(null);
     }
   }
 
@@ -283,11 +471,15 @@ export function ReportGenerator() {
       }),
     }));
 
+    setGenerationProgress({ completed: 0, total: targets.length, elapsedSeconds: 0 });
     setIsGenerating(true);
     try {
       const response = await fetch("/api/generate-report", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          accept: "application/x-ndjson",
+        },
         body: JSON.stringify({
           password,
           subject,
@@ -299,18 +491,84 @@ export function ReportGenerator() {
           instruction: [instruction, "모든 문장은 기본적으로 명사형 종결어미로 끝나도록 작성해줘."].filter(Boolean).join("\n"),
         }),
       });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.message ?? "평어 생성에 실패했습니다.");
-      updateWorkspace({ analysis, rows: rows.map((row) => {
-        const generated = body.rows.find((item: { studentNumber: number }) => item.studentNumber === row.number);
-        return generated && targetIds.includes(row.id) ? { ...row, evaluation: generated.selectedLevels, comment: generated.comment } : row;
-      }) });
-      if (body.usage) {
-        const amountKrw = body.usage.amountKrw;
-        const budgetKrw = body.usage.budgetKrw;
-        setUsage({ amountKrw, budgetKrw, status: amountKrw >= budgetKrw ? "limit" : amountKrw >= budgetKrw * 0.9 ? "warning" : "normal" });
+      if (!response.ok) {
+        const body = await response.json();
+        throw new Error(body.message ?? "평어 생성에 실패했습니다.");
       }
-      setNotice({ type: "success", message: `${targets.length}명의 ${subject} 학기말 종합의견을 생성했습니다.` });
+
+      const updateUsage = (nextUsage?: { amountKrw: number; budgetKrw: number }) => {
+        if (!nextUsage) return;
+        const { amountKrw, budgetKrw } = nextUsage;
+        setUsage({ amountKrw, budgetKrw, status: amountKrw >= budgetKrw ? "limit" : amountKrw >= budgetKrw * 0.9 ? "warning" : "normal" });
+      };
+      const mergeGeneratedRows = (generatedRows: GeneratedReportRow[]) => {
+        const generatedByNumber = new Map(generatedRows.map((item) => [item.studentNumber, item]));
+        updateWorkspace({ analysis, rows: rows.map((row) => {
+          const generated = generatedByNumber.get(row.number);
+          return generated && targetIds.includes(row.id)
+            ? { ...row, evaluation: generated.selectedLevels, comment: generated.comment }
+            : row;
+        }) });
+      };
+
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/x-ndjson")) {
+        const body = await response.json();
+        mergeGeneratedRows(body.rows ?? []);
+        updateUsage(body.usage);
+        setGenerationProgress({ completed: targets.length, total: targets.length, elapsedSeconds: 0 });
+        setNotice({ type: "success", message: `${targets.length}명의 ${subject} 학기말 종합의견을 생성했습니다.` });
+      } else {
+        if (!response.body) throw new Error("생성 진행 연결을 시작하지 못했습니다.");
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        const generatedByNumber = new Map<number, GeneratedReportRow>();
+        let buffer = "";
+        let failed = 0;
+        let streamError = "";
+
+        const handleEvent = (event: Record<string, unknown>) => {
+          if (event.type === "progress") {
+            const eventRows = Array.isArray(event.rows) ? event.rows as GeneratedReportRow[] : [];
+            eventRows.forEach((item) => generatedByNumber.set(item.studentNumber, item));
+            mergeGeneratedRows([...generatedByNumber.values()]);
+            setGenerationProgress((current) => ({
+              completed: Number(event.completed ?? generatedByNumber.size),
+              total: Number(event.total ?? targets.length),
+              elapsedSeconds: current?.elapsedSeconds ?? 0,
+            }));
+          } else if (event.type === "error") {
+            failed += Number(event.failed ?? 0);
+            streamError = typeof event.message === "string" ? event.message : "일부 학생의 평어를 생성하지 못했습니다.";
+          } else if (event.type === "complete") {
+            failed = Number(event.failed ?? failed);
+            updateUsage(event.usage as { amountKrw: number; budgetKrw: number } | undefined);
+            setGenerationProgress((current) => ({
+              completed: Number(event.completed ?? generatedByNumber.size),
+              total: Number(event.total ?? targets.length),
+              elapsedSeconds: current?.elapsedSeconds ?? 0,
+            }));
+          }
+        };
+
+        while (true) {
+          const { value, done } = await reader.read();
+          buffer += decoder.decode(value, { stream: !done });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+          for (const line of lines) {
+            if (line.trim()) handleEvent(JSON.parse(line) as Record<string, unknown>);
+          }
+          if (done) break;
+        }
+        if (buffer.trim()) handleEvent(JSON.parse(buffer) as Record<string, unknown>);
+
+        if (failed > 0) {
+          setNotice({ type: "error", message: `${generatedByNumber.size}명 생성 완료 · ${failed}명 실패 · ${streamError}` });
+        } else {
+          setNotice({ type: "success", message: `${generatedByNumber.size}명의 ${subject} 학기말 종합의견을 생성했습니다.` });
+        }
+      }
     } catch (error) {
       setNotice({ type: "error", message: error instanceof Error ? error.message : "평어 생성에 실패했습니다." });
     } finally {
@@ -320,6 +578,7 @@ export function ReportGenerator() {
 
   async function generate(mode: TargetMode) {
     if (!workspace.analysis) return setNotice({ type: "error", message: "먼저 첨부 자료를 분석해 주세요." });
+    setProofreadBackup(null);
     await generateFrom(workspace.analysis, workspace.rows, mode);
   }
 
@@ -330,6 +589,7 @@ export function ReportGenerator() {
       const body = await response.json();
       if (!response.ok) throw new Error(body.message ?? "저장본 목록을 불러오지 못했습니다.");
       setSavedReports(body.reports ?? []);
+      setHasLoadedSavedReports(true);
     } catch (error) {
       setNotice({ type: "error", message: error instanceof Error ? error.message : "저장본 목록을 불러오지 못했습니다." });
     } finally {
@@ -461,6 +721,41 @@ export function ReportGenerator() {
     }
   }
 
+  async function proofreadResults() {
+    const targets = workspace.rows.filter((row) => row.comment.trim()).map((row) => ({ id: row.id, comment: row.comment }));
+    if (targets.length === 0) {
+      setNotice({ type: "error", message: "맞춤법을 검사할 교과 평어가 없습니다." });
+      return;
+    }
+    if (!password) {
+      setNotice({ type: "error", message: "교사 접근 비밀번호를 입력해 주세요." });
+      return;
+    }
+    setIsProofreading(true);
+    setNotice({ type: "info", message: `맞춤법 검사 중 0/${targets.length}개 (0%)` });
+    try {
+      const corrected = await proofreadInBatches({
+        password,
+        rows: targets,
+        onProgress: (completed, total) => setNotice({ type: "info", message: `맞춤법 검사 중 ${completed}/${total}개 (${Math.round(completed / total * 100)}%)` }),
+      });
+      const correctedById = new Map(corrected.map((row) => [row.id, row.comment]));
+      setProofreadBackup({ subject, comments: new Map(targets.map((row) => [row.id, row.comment])) });
+      updateWorkspace({ rows: workspace.rows.map((row) => correctedById.has(row.id) ? { ...row, comment: correctedById.get(row.id) ?? row.comment } : row) });
+      setNotice({ type: "success", message: `${targets.length}명 교과 평어의 맞춤법 검사를 완료했습니다.` });
+    } catch (error) {
+      setNotice({ type: "error", message: error instanceof Error ? error.message : "맞춤법 검사에 실패했습니다." });
+    } finally {
+      setIsProofreading(false);
+    }
+  }
+
+  function restoreBeforeProofread() {
+    if (!proofreadBackup || proofreadBackup.subject !== subject) return;
+    updateWorkspace({ rows: workspace.rows.map((row) => proofreadBackup.comments.has(row.id) ? { ...row, comment: proofreadBackup.comments.get(row.id) ?? row.comment } : row) });
+    setProofreadBackup(null);
+    setNotice({ type: "success", message: "맞춤법 검사 전 결과로 되돌렸습니다." });
+  }
   async function copyResults() {
     try {
       await navigator.clipboard.writeText(toClipboardText(workspace.rows));
@@ -479,8 +774,13 @@ export function ReportGenerator() {
     URL.revokeObjectURL(url);
   }
 
+  function setAllSelected(selected: boolean) {
+    updateWorkspace({ rows: workspace.rows.map((row) => ({ ...row, selected })) });
+  }
+
   function resetSubject() {
     setWorkspaces((current) => ({ ...current, [subject]: createWorkspaces()[subject] }));
+    if (proofreadBackup?.subject === subject) setProofreadBackup(null);
     setNotice({ type: "info", message: `${subject} 작업 자료를 초기화했습니다.` });
   }
 
@@ -493,7 +793,7 @@ export function ReportGenerator() {
 
       <section className="privacy-notice" aria-label="개인정보 보호 안내">
         <b>개인정보 보호를 위한 익명 처리</b>
-        <p>평가결과 파일의 학생 성명은 저장하거나 외부 서비스로 전송하지 않습니다. 학생 번호는 유지하고 성명은 자동으로 익명 처리합니다. 새로고침하거나 창을 닫으면 모든 작업 자료가 삭제됩니다.</p>
+        <p>평가결과 파일의 학생 성명은 저장하거나 외부 서비스로 전송하지 않습니다. 학생 번호는 유지하고 성명은 자동으로 익명 처리합니다. 익명 작업 내용은 현재 브라우저 탭에서 새로고침해도 유지되며, 탭을 닫으면 삭제됩니다.</p>
       </section>
 
       <section className="saved-report-panel" aria-label="익명 저장본 관리">
@@ -507,7 +807,8 @@ export function ReportGenerator() {
             aria-label="저장본 선택"
             value={selectedSavedReportId}
             onChange={(event) => setSelectedSavedReportId(event.target.value)}
-            disabled={isLoadingSavedReports || savedReports.length === 0}
+            onFocus={() => { if (!hasLoadedSavedReports && !isLoadingSavedReports) void refreshSavedReports(); }}
+            disabled={isLoadingSavedReports}
           >
             <option value="">{isLoadingSavedReports ? "저장본 불러오는 중" : "저장본 선택"}</option>
             {savedReports.map((report) => (
@@ -568,7 +869,6 @@ export function ReportGenerator() {
           <FileDropzone label="수행평가지" accept=".hwp,.hwpx,.pdf" multiple files={workspace.worksheets} onFiles={acceptWorksheets} onRemove={(index) => clearAnalysis({ worksheets: workspace.worksheets.filter((_, itemIndex) => itemIndex !== index) })} />
           <FileDropzone label="영역별 평가결과" accept=".pdf,application/pdf" multiple files={workspace.resultFiles} onFiles={acceptResults} onRemove={(index) => clearAnalysis({ resultFiles: workspace.resultFiles.filter((_, itemIndex) => itemIndex !== index) })} />
         </div>
-        <div className="analysis-actions"><button type="button" className="button-primary" onClick={analyzeDocuments} disabled={isAnalyzing}>{isAnalyzing ? "자료 분석 중" : "첨부 자료 분석"}</button><span>영역 이름과 학생별 단계는 평가결과 PDF에서 자동으로 확인합니다.</span></div>
       </section>
 
       <details className="reference-panel writing-panel" open>
@@ -579,7 +879,25 @@ export function ReportGenerator() {
             <label><span>학기말 종합의견 예시</span><textarea className="textarea" aria-label="학기말 종합의견 예시" value={example} onChange={(event) => setExample(event.target.value)} rows={4} /></label>
             <label><span>추가 지시사항</span><textarea className="textarea" aria-label="추가 지시사항" value={instruction} onChange={(event) => setInstruction(event.target.value)} rows={4} /></label>
           </div>
-          <label className="password-setting"><span>교사 접근 비밀번호 <b>필수</b></span><input className="field" type="password" aria-label="교사 접근 비밀번호" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" /><small>.env.local의 TEACHER_ACCESS_PASSWORD 값입니다. 생성 요청 확인에만 사용하며 저장하지 않습니다.</small></label>
+          <div className="password-setting" role="group" aria-label="분석 및 접근 설정">
+            <label><span>교사 접근 비밀번호 <b>필수</b></span><input className="field" type="password" aria-label="교사 접근 비밀번호" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" /></label>
+            <div className="analysis-action">
+              <button type="button" className="button-primary" onClick={analyzeDocuments} disabled={isAnalyzing}>{isAnalyzing ? `분석 중 ${analysisProgress?.percent ?? 5}% · ${analysisProgress?.completedFiles ?? 0}/${analysisProgress?.totalFiles ?? analysisFileCount}개 파일 · ${analysisElapsedSeconds}초` : "첨부 자료 분석"}</button>
+              {isAnalyzing && analysisProgress && (
+                <div
+                  className="analysis-progress"
+                  role="progressbar"
+                  aria-label="첨부 자료 분석 진행률"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={analysisProgress.percent}
+                >
+                  <span style={{ width: `${analysisProgress.percent}%` }} />
+                </div>
+              )}
+            </div>
+            <small>영역 이름과 학생별 단계는 평가결과 PDF에서 자동으로 확인합니다. 비밀번호는 생성 요청 확인에만 사용하며 저장하지 않습니다.</small>
+          </div>
         </div>
       </details>
 
@@ -589,11 +907,39 @@ export function ReportGenerator() {
         <section className="table-panel" aria-labelledby="student-table-title">
           <div className="table-toolbar">
             <div><h2 id="student-table-title">{subject} 학생별 평가결과 및 종합의견</h2><span>Total {workspace.rows.length}</span></div>
-            <div className="toolbar-buttons toolbar-buttons--primary"><button type="button" className="button-primary" disabled={isGenerating || usage.status === "limit"} onClick={() => generate("smart")}>{isGenerating ? "생성 중" : "교과평어 생성"}</button><button type="button" className="button-secondary" onClick={() => generate("selected")}>선택 학생만 생성</button><button type="button" className="button-secondary" onClick={() => generate("all")}>전체 학생 생성</button></div>
-            <div className="toolbar-divider" />
-            <div className="toolbar-buttons"><button type="button" className="button-secondary" onClick={copyResults}>결과 복사</button><button type="button" className="button-secondary" onClick={downloadCsv}>CSV 다운로드</button><button type="button" className="button-quiet" onClick={resetSubject}>초기화</button></div>
+            <div className="toolbar-workflow">
+
+              <div className="toolbar-action-group toolbar-action-group--generation" role="group" aria-label="평어 생성">
+                <span className="toolbar-action-group__label">평어 생성</span>
+                <button type="button" className="button-primary toolbar-main-action" disabled={isGenerating || usage.status === "limit"} onClick={() => generate("smart")}>{isGenerating ? "생성 중" : "교과평어 생성"}</button>
+                <button type="button" className="button-secondary" disabled={isGenerating} onClick={() => generate("selected")}>선택 학생만 생성</button>
+                <button type="button" className="button-secondary" disabled={isGenerating} onClick={() => generate("all")}>전체 학생 생성</button>
+              </div>
+              <div className="toolbar-action-group toolbar-action-group--results" role="group" aria-label="결과 관리">
+                <span className="toolbar-action-group__label">결과 관리</span>
+                <button type="button" className="button-secondary" disabled={isGenerating || isProofreading} onClick={proofreadResults}>{isProofreading ? "맞춤법 검사 중…" : "전체 결과 맞춤법 검사"}</button>
+                {proofreadBackup?.subject === subject ? <button type="button" className="button-secondary" disabled={isGenerating || isProofreading} onClick={restoreBeforeProofread}>검사 전으로 되돌리기</button> : null}
+                <button type="button" className="button-secondary" onClick={copyResults}>결과 복사</button>
+                <button type="button" className="button-secondary" onClick={downloadCsv}>CSV 다운로드</button>
+                <button type="button" className="button-quiet" onClick={resetSubject}>초기화</button>
+              </div>
+            </div>
           </div>
-          <div className="table-scroll">
+          {generationProgress && (
+            <div
+              className="generation-progress"
+              role="progressbar"
+              aria-label="평어 생성 진행률"
+              aria-valuemin={0}
+              aria-valuemax={generationProgress.total}
+              aria-valuenow={generationProgress.completed}
+            >
+              <span>{generationProgress.completed}/{generationProgress.total}명</span>
+              <b>{generationProgress.total > 0 ? Math.round(generationProgress.completed / generationProgress.total * 100) : 0}%</b>
+              <small>{generationProgress.elapsedSeconds}초</small>
+            </div>
+          )}
+          <div className="table-scroll table-scroll--subject-result">
             <table className="student-table student-table--subject-result">
               <colgroup>
                 <col className="col-check" />
@@ -606,7 +952,15 @@ export function ReportGenerator() {
               </colgroup>
               <thead>
                 <tr>
-                  <th className="col-check">선택</th>
+                  <th className="col-check">
+                    <HeaderSelectionCheckbox
+                      selectedCount={selectedRowCount}
+                      totalCount={workspace.rows.length}
+                      disabled={isGenerating}
+                      label="교과 전체 학생 선택"
+                      onChange={setAllSelected}
+                    />
+                  </th>
                   <th className="col-number">번호</th>
                   <th className="col-name">이름</th>
                   <th className="col-subject">과목</th>
