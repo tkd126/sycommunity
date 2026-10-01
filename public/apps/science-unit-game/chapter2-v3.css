@@ -1,0 +1,149 @@
+#experimentPanel.chapter2-v3{position:fixed;inset:0;width:100%;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#19272c;overflow:hidden;z-index:20;}
+/* The HUD's empty strip must not intercept objects near the top of the scene. */
+body:has(.chapter2-v3) #hud{pointer-events:none;}
+body:has(.chapter2-v3) #hud button{pointer-events:auto;}
+.chapter2-v3 .v3-world{position:absolute;inset:0;overflow:auto;scrollbar-width:none;}
+.chapter2-v3 .v3-art,.chapter2-v3 .v3-spots{position:absolute;left:0;top:0;width:100%;height:100%;}
+.chapter2-v3 .v3-art{object-fit:fill;}
+.chapter2-v3 .v3-spots{overflow:visible;}
+.chapter2-v3 .v3-spot{fill:transparent;stroke:transparent;stroke-width:2;cursor:pointer;vector-effect:non-scaling-stroke;pointer-events:all;}
+.chapter2-v3 .v3-spot:hover,.chapter2-v3 .v3-spot:focus{stroke:#ffe48b;filter:drop-shadow(0 0 4px #ffc95d);outline:none;}
+.chapter2-v3 .v3-soft:hover,.chapter2-v3 .v3-soft:focus{stroke:transparent;fill:#fff3ac25;filter:blur(8px);}
+.chapter2-v3 .v3-spot[data-target=clip]:hover,.chapter2-v3 .v3-spot[data-target=clip]:focus{stroke:transparent;filter:none;}
+.v3-spots:has([data-target=clip]:hover) .v3-clip-art,.v3-spots:has([data-target=clip]:focus) .v3-clip-art{filter:drop-shadow(1px 0 #ffe48b) drop-shadow(-1px 0 #ffe48b) drop-shadow(0 1px #ffe48b) drop-shadow(0 -1px #ffe48b);}
+.chapter2-v3.v3-talking .v3-spots{pointer-events:none;}
+.chapter2-v3.v3-talking .v3-spot{pointer-events:none;}
+.chapter2-v3.v3-inspecting .v3-spot{pointer-events:none;}
+.chapter2-v3 button.v3-clue-back{background:transparent;color:#685439;border:0;box-shadow:none;}
+.chapter2-v3 .v3-tape-puzzle{left:50%;right:auto;transform:translateX(-50%);width:min(720px,94%);max-height:78%;overflow:auto;bottom:2%;padding:20px;}
+.v3-tape-puzzle header{display:flex;justify-content:space-between;align-items:start;gap:12px;}.v3-tape-puzzle h3{margin:0;font-size:23px;}.v3-tape-puzzle small{font-size:13px;color:#6d5638;}
+.v3-tape-puzzle .v3-track-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0;}.v3-track-pair button{min-height:86px;margin:0;}.v3-cassette{display:block;font-size:27px;color:#eed9aa;letter-spacing:8px;}
+.v3-tape-puzzle .v3-tape-caption{display:block;min-height:130px;padding:14px;background:#fffaf0;border-left:4px solid #c29249;}.v3-tape-caption p{margin:4px 0;line-height:1.6;}.v3-tape-puzzle .v3-tape-order{display:grid;grid-template-columns:1fr 1fr;min-height:115px;align-content:start;gap:8px;}.v3-tape-order p{grid-column:1/-1;margin:12px 0 0;}.v3-tape-order button{margin:0;}
+@media(max-width:650px){.chapter2-v3 .v3-tape-puzzle{padding:12px;max-height:76%;}.v3-tape-puzzle h3{font-size:18px;}.v3-tape-puzzle .v3-tape-caption{min-height:180px;}.v3-tape-puzzle button{font-size:14px!important;padding:10px!important;}}
+.v3-goal{position:absolute;left:18px;top:76px;padding:12px 18px;color:#fff4d2;background:#18323adb;border-radius:8px;pointer-events:none;font-weight:bold;}
+.v3-goal small{display:block;font-weight:normal;font-size:12px;margin-top:4px;}
+.v3-film-frame{display:block;width:100%;max-height:160px;margin:8px auto;border-radius:6px;}
+.v3-playback .v3-film-frame{min-height:0;height:100%;max-height:none;margin:0;}
+.v3-playback{grid-template-rows:minmax(0,1fr) auto auto!important;place-content:stretch!important;padding:12px;gap:6px;font-size:clamp(14px,1.8vw,24px)!important;}
+.v3-playback p{margin:0;}.v3-playback small{font-size:13px;}
+.v3-work{position:absolute;inset:17% 4% 3%;z-index:15;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:12px;padding:18px;background:#fff5df;color:#302e29;border:3px solid #a78d62;border-radius:18px;box-shadow:0 10px 30px #0006;}
+.v3-work header{display:flex;justify-content:space-between;gap:12px;align-items:center;}.v3-work h3{margin:0;}.v3-work-body{overflow:auto;min-height:0;}.v3-work-body p{margin:12px 0 8px;}.v3-work-body button{margin:4px;}.v3-five{display:grid;grid-template-columns:1fr;}.v3-five button{text-align:left;}.v3-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}.v3-edit-grid article{border:1px solid #ac9672;border-radius:10px;padding:12px;background:#eddfbf;}.v3-edit-grid h4{margin:0;}.v3-work>p{margin:0;min-height:2.6em;font-size:14px;}.v3-story-choice{height:auto;max-height:65%;overflow:auto;}.v3-story-choice button{display:block;width:100%;margin:8px 0;text-align:left;}.v3-playback{position:absolute;inset:20% 12% 32%;display:grid;place-content:center;text-align:center;background:#172c3bf5;color:#fff3c8;border:5px solid #b39a66;border-radius:12px;z-index:6;font-size:clamp(18px,3vw,34px);}
+@media(max-width:650px){.v3-work{inset:17% 2% 2%;padding:12px;gap:8px;}.v3-work header h3{font-size:18px;}.v3-work header button{font-size:12px!important;padding:7px!important;}.v3-edit-grid{grid-template-columns:1fr;}.v3-work-body button{font-size:14px!important;}.v3-work>p{font-size:12px;}}
+@media(max-aspect-ratio:1/1){.chapter2-v3:not(.v3-inspecting) .v3-goal::after{content:'그림을 좌우로 밀어 다른 물건도 살펴보세요';display:block;margin-top:5px;font-size:12px;font-weight:normal;color:#f6d990;}}
+.v3-dialogue,.v3-question{position:absolute;left:2%;right:2%;bottom:2%;width:96%;min-height:155px;height:22%;max-height:230px;background:#fff4dcee;color:#443b30;border:3px solid #a78d62;border-radius:18px;padding:36px 36px 22px;text-align:left;box-shadow:0 4px 0 #52452e;font-size:clamp(18px,1.5vw,27px);line-height:1.7;z-index:4;}
+.v3-dialogue b{position:absolute;top:-24px;left:24px;min-width:85px;text-align:center;padding:5px 18px;background:#f4bf48;border:2px solid #9c793d;border-radius:8px;font-size:20px;}
+.v3-dialogue small{position:absolute;right:24px;bottom:15px;color:#85632b;}
+.v3-portrait{position:absolute;left:12%;bottom:20%;height:65%;max-width:40%;object-fit:contain;object-position:bottom;pointer-events:none;z-index:3;}
+.v3-question{height:auto;min-height:0;max-height:none;font-size:18px;padding:20px;}
+.v3-question label{display:block;margin-bottom:10px;}.v3-question div{display:flex;gap:8px;flex-wrap:wrap;}
+.v3-question input{font-size:20px;min-width:100px;flex:1;padding:10px;color:#243139;background:#fffdf6;border:2px solid #ad976e;border-radius:8px;}
+.chapter2-v3 button:not(.v3-dialogue){padding:10px 16px;color:#fff6de;background:#254653;border:1px solid #b7c7c9;border-radius:9px;cursor:pointer;font-size:16px;}
+.chapter2-v3 button[aria-pressed=true]{background:#836021;outline:2px solid #ffe6a0;}
+.v3-tools{position:absolute;bottom:2%;right:2%;display:flex;gap:6px;max-width:90%;flex-wrap:wrap;background:#18323ae6;padding:10px;border-radius:10px;z-index:2;}.v3-tools small{color:#fff;flex-basis:100%;}
+.v3-recorder{position:absolute;left:30%;top:45%;display:flex;gap:8px;}
+.v3-detail{position:absolute;width:40%;left:30%;top:22%;max-height:45%;object-fit:contain;border:3px solid #b69d6d;border-radius:16px;pointer-events:none;}
+@media(max-aspect-ratio:1/1){.chapter2-v3 .v3-art,.chapter2-v3 .v3-spots{width:177.68dvh;max-width:none;}.v3-goal{top:90px;left:8px;max-width:85%;font-size:14px;}.v3-dialogue{padding:25px 18px 15px;height:25%;font-size:17px;}.v3-portrait{max-width:65%;left:5%;}.v3-detail{left:5%;width:90%;}.v3-tools{bottom:28%;}.v3-recorder{left:15%;top:50%;}}
+/* Reuse chapter one's dialogue geometry and typography, overriding lab buttons. */
+#experimentPanel.chapter2-v3 .dialogue{left:2.5%;right:2.5%;bottom:2.5%;width:auto;height:var(--dialogue-height);min-height:0;max-height:none;padding:clamp(28px,4dvh,58px) 3vw 2.5dvh;border:3px solid #69563d;border-radius:12px 24px 12px 24px;color:var(--cartoon-ink);background:#fff5dff5;box-shadow:inset 0 0 0 4px #fffcf1,0 5px 0 #3f3b31b3;font-family:var(--font-story);font-weight:400;z-index:14;}
+#experimentPanel.chapter2-v3 .dialogue:hover{background:#fff5dff5;border-color:#9b723d;}
+#experimentPanel.chapter2-v3 .dialogue .line{font-family:var(--font-story);font-size:clamp(22px,3dvh,40px);line-height:1.65;font-weight:400;}
+.chapter2-v3 .v3-cast{z-index:3;}
+.v3-evidence{position:absolute;left:8%;top:19%;width:84%;margin:0;padding:10px;background:#fff5df;box-shadow:0 8px 24px #0008;z-index:5;color:#333;}
+.v3-evidence img{display:block;width:100%;max-height:36dvh;object-fit:contain;}
+.v3-evidence figcaption{text-align:center;font-size:clamp(13px,1.3vw,20px);line-height:1.6;}
+.v3-photo-board{position:relative;width:min(100%,108dvh);margin:auto;}.v3-photo-board img{width:100%;max-height:none;}.chapter2-v3 button.v3-photo-mark{position:absolute;background:transparent;border:2px solid transparent;border-radius:5px;padding:0;}.chapter2-v3 button.v3-photo-mark:hover,.chapter2-v3 button.v3-photo-mark:focus-visible,.chapter2-v3 button.v3-photo-mark[aria-pressed=true]{border-color:#ffd86a;background:#ffe39a20;outline:none;}.v3-photo-mark span{position:absolute;bottom:100%;left:0;white-space:nowrap;background:#18323a;color:#fff2c9;padding:3px 6px;opacity:0;font-size:12px;}.v3-photo-mark:hover span,.v3-photo-mark:focus-visible span{opacity:1;}
+.chapter2-v3 button.v3-photo-mark{box-shadow:none;min-height:0;margin:0;}
+@media(max-width:650px){.v3-evidence{left:3%;width:94%;overflow-x:auto;}.v3-photo-board{width:900px;max-width:none;margin:0;}.v3-evidence figcaption{width:900px;text-align:left;}.v3-evidence::before{content:'사진을 좌우로 밀어 비교하세요';display:block;font-size:13px;margin-bottom:5px;}}
+.v3-evidence-detail{position:absolute;left:26%;top:15%;width:48%;height:47%;object-fit:contain;z-index:5;filter:drop-shadow(0 5px 15px #0008);}
+.v3-held{position:absolute;right:2%;bottom:3%;z-index:2;}
+.v3-activities{position:absolute;right:2%;top:18%;display:flex;flex-direction:column;gap:8px;z-index:3;}
+.v3-lab{position:absolute;inset:15% 6% 3%;overflow:auto;background:#fff5df;color:#302e29;border:3px solid #a78d62;border-radius:18px;padding:24px;z-index:15;text-align:left;font-family:var(--font-story);font-size:clamp(16px,2dvh,23px);}
+.v3-lab h2{font-size:1.25em;}.v3-lab button,.v3-question button{margin:4px;}.lab-result{padding:20px;margin:14px 0;background:#d9e8e7;border-radius:12px;text-align:center;line-height:1.8;font-size:1.15em;}
+.v3-lab{inset:10% 3% 2%;padding:16px 24px;background:#f5ecd7;}
+.v3-lab header{display:flex;align-items:center;justify-content:space-between;gap:12px;}.v3-lab header h2{margin:0;}.lab-story{margin:12px 0;color:#364c51;}
+.lab-apparatus{position:relative;max-width:1050px;margin:0 auto;border:5px solid #76654b;border-radius:14px;overflow:hidden;background:#b6bfb2;box-shadow:inset 0 0 12px #0003;}
+.lab-apparatus svg{display:block;width:100%;height:auto;}.lab-apparatus text{font:22px sans-serif;fill:#243f47;}.lab-apparatus .lab-touch{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:clamp(12px,1.1vw,17px);padding:8px 12px;background:#244753e8;}
+.lab-beam{transform-origin:450px 158px;transform:rotate(var(--tilt));animation:lab-weigh .8s ease-out;}.lab-pinwheel{transform-origin:450px 178px;}.lab-pinwheel.is-running{animation:lab-spin var(--spin-time) linear infinite;animation-direction:var(--spin-direction);}.lab-updraft{stroke-dasharray:16 7;animation:lab-flow 1s linear infinite;}
+.lab-controls{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:10px;}.lab-controls p{flex-basis:100%;margin:5px 0;font-size:16px;}.lab-controls .lab-result{flex-basis:100%;margin:6px 0;padding:8px;font-size:16px;}
+@keyframes lab-spin{to{transform:rotate(360deg)}}@keyframes lab-flow{to{stroke-dashoffset:46}}@keyframes lab-weigh{from{transform:rotate(0)}to{transform:rotate(var(--tilt))}}
+@media(prefers-reduced-motion:reduce){.lab-beam,.lab-pinwheel.is-running,.lab-updraft{animation:none;}}
+@media(max-width:650px){.lab-apparatus{min-height:230px;}.lab-apparatus svg{height:230px;}.lab-apparatus .lab-touch{font-size:11px;padding:6px!important;white-space:normal;max-width:34%;}.v3-lab header{align-items:flex-start;}.v3-lab header h2{font-size:18px;}}
+@media(max-width:650px){.v3-lab{inset:18% 2% 2%;padding:12px;}.v3-activities{top:22%;max-width:65%;}.v3-question:has([data-photo]){max-height:40%;overflow:auto;}}
+.v3-science-evidence{position:absolute;left:8%;right:8%;top:22%;max-height:42%;overflow:auto;white-space:pre-line;padding:22px 28px;background:#fff5dff5;border:2px solid #a78d62;border-radius:8px;color:#382f27;box-shadow:0 8px 24px #0008;font-family:var(--font-story);font-size:clamp(17px,2.3dvh,26px);line-height:1.65;z-index:5;}
+@media(max-width:650px){.v3-science-evidence{left:3%;right:3%;top:23%;max-height:36%;padding:14px;font-size:16px;}.v3-question input{width:100%;min-width:0;}.v3-question{font-size:16px;padding:14px;}}
+@media(max-width:650px){#experimentPanel.chapter2-v3 .dialogue{padding:28px 18px 18px;}#experimentPanel.chapter2-v3 .dialogue .line{font-size:19px;}}
+@media(max-height:500px) and (min-width:651px){#experimentPanel.chapter2-v3 .dialogue{padding:20px 24px 12px;}#experimentPanel.chapter2-v3 .dialogue .line{font-size:16px;line-height:1.4;}}
+/* Keep the console geometry stable as observations and hints change. */
+.v3-lab{display:grid;grid-template-rows:auto 3.5em minmax(180px,1fr) 165px 3em 44px;gap:8px;overflow:hidden;padding:14px 20px;background:linear-gradient(110deg,#f4ead3,#e9dfc5);box-shadow:0 12px 35px #0007;}
+.v3-lab header h2{font-size:22px;}.v3-lab header button{flex-shrink:0;}.v3-lab .lab-story{margin:0;overflow:auto;line-height:1.5;}.v3-lab .lab-apparatus{width:100%;height:100%;min-height:0;max-width:none;border-color:#536a67;border-width:4px;}.v3-lab .lab-apparatus svg{width:100%;height:100%;}
+.v3-lab .lab-controls{margin:0;padding:8px 12px;overflow:auto;align-content:start;background:#183d4610;border:1px solid #9dafa5;border-radius:10px;}.v3-lab .lab-feedback{margin:0;padding:5px 10px;font-size:15px;line-height:1.4;overflow:auto;border-left:4px solid #dba84c;background:#fff9e6;}.v3-lab .lab-confirm{margin:0;justify-self:end;min-width:240px;}.v3-lab .lab-touch{margin:0!important;min-height:34px;box-shadow:0 3px 0 #243c3a;}.v3-lab button:focus-visible{outline:3px solid #e5a631;outline-offset:2px;}
+@media(max-width:650px){.v3-lab{grid-template-rows:54px 4.5em minmax(140px,1fr) 175px 3.5em 44px;inset:15% 2% 1%;gap:5px;padding:10px;}.v3-lab header h2{font-size:17px;}.v3-lab header button{font-size:12px!important;padding:6px!important;max-width:100px;}.v3-lab .lab-story{font-size:14px;}.v3-lab .lab-controls{padding:4px;}.v3-lab .lab-controls p{font-size:13px;}.v3-lab .lab-controls button{font-size:13px;padding:7px;}.v3-lab .lab-feedback{font-size:12px;}.v3-lab .lab-confirm{font-size:13px;min-width:0;}.v3-lab .lab-touch{font-size:11px;}}
+@media(max-height:560px){.v3-lab{overflow:auto;grid-template-rows:auto auto 200px 155px 50px 44px;}}
+.v3-clue{left:50%;right:auto;transform:translateX(-50%);width:min(680px,94%);bottom:3%;padding:20px 24px;border-radius:12px;box-shadow:0 7px 0 #544734,0 18px 30px #0004;}
+.v3-clue small{font-size:13px;color:#7d6441;}.v3-clue h3{font-size:21px;margin:5px 0 12px;}.v3-clue p{margin:8px 0 16px;}.v3-clue .v3-clue-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;}.v3-clue .v3-clue-actions button{min-height:64px;margin:0;background:#254653;color:#fff5d8;}.v3-clue .v3-clue-back{margin:14px 0 0;padding:6px 10px;font-size:13px;background:transparent;color:#685439;border:0;box-shadow:none;}.v3-recorder{left:50%;top:auto;bottom:13%;transform:translateX(-50%);z-index:3;}
+@media(max-width:650px){.v3-clue{padding:14px;}.v3-clue h3{font-size:18px;}.v3-clue .v3-clue-actions button{font-size:14px;padding:10px;}.v3-recorder{bottom:31%;}}
+/* Content-sized activities; explicit groups and stable controls. */
+#experimentPanel.chapter2-v3 .v3-work{inset:auto;left:50%;top:50%;transform:translate(-50%,-50%);width:min(900px,94vw);height:auto;max-height:78dvh;grid-template-rows:auto minmax(0,1fr) auto auto;}
+#experimentPanel.chapter2-v3 .v3-work:has(.v3-edit-grid){width:min(1060px,94vw);}
+#experimentPanel.chapter2-v3 .v3-work-body{max-height:58dvh;overscroll-behavior:contain;}
+#experimentPanel.chapter2-v3 .v3-work fieldset,.v3-mass fieldset{min-width:0;border:1px solid #ad9670;border-radius:10px;padding:10px;margin:8px 0;}
+#experimentPanel.chapter2-v3 .v3-work legend,.v3-mass legend{font-weight:bold;color:#244753;}
+.v3-direction{display:flex;justify-content:space-between;gap:16px;padding:18px;background:#e8dfc7;border-radius:10px;}
+.v3-wind-form{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;}
+.v3-wind-form input{width:180px;padding:12px;font-size:20px;border:2px solid #ad9670;border-radius:8px;}
+#experimentPanel.chapter2-v3 .v3-story-choice{position:absolute;left:50%;bottom:30%;transform:translateX(-50%);width:min(1180px,82vw);max-height:48dvh;overflow:auto;z-index:12;background:none;border:0;padding:0;}
+#experimentPanel.chapter2-v3 .v3-story-choice .choice-btn{display:grid;grid-template-columns:44px minmax(0,1fr) 20px;min-height:74px;width:100%;margin:12px 0;padding:14px 22px;border:2px solid #a68e68;border-radius:14px;background:#fff4dff5;color:#2e3e43;font-size:clamp(19px,1.7vw,28px);text-align:left;}
+#experimentPanel.chapter2-v3 .v3-story-choice .choice-number{width:42px;height:42px;background:#527b7c;color:#fff6da;}
+#experimentPanel.chapter2-v3 .v3-choice-context{pointer-events:none;}
+#experimentPanel.chapter2-v3 .v3-film-frame{overflow:hidden!important;aspect-ratio:370/215;width:min(100%,370px);height:auto;max-height:215px;flex-shrink:0;}
+#experimentPanel.chapter2-v3 .v3-evidence{left:50%;right:auto;top:12%;transform:translateX(-50%);width:min(1100px,94vw);max-height:53dvh;margin:0;padding:12px;border:2px solid #a78d62;border-radius:12px;overflow:auto;}
+.v3-evidence h3,.v3-evidence p{margin:4px 0;text-align:left;}
+#experimentPanel.chapter2-v3 .v3-photo-answer{left:50%;right:auto;bottom:3%;transform:translateX(-50%);width:min(1000px,94vw);height:auto;min-height:0;max-height:28dvh;overflow:auto;padding:14px 20px;}
+.v3-photo-answer h3,.v3-photo-answer p{margin:5px 0;}
+#experimentPanel.chapter2-v3 .v3-mass{inset:auto;left:50%;top:52%;transform:translate(-50%,-50%);width:min(1040px,94vw);height:min(790px,85dvh);grid-template-rows:auto 2.5em minmax(120px,1fr) 270px 44px;gap:7px;}
+#experimentPanel.chapter2-v3 .v3-mass .lab-controls{display:block;overflow:auto;}
+.v3-mass fieldset{padding:6px 10px;margin:4px 0;}
+.lab-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+.lab-options.lab-reasons{grid-template-columns:repeat(2,minmax(0,1fr));}
+#experimentPanel.chapter2-v3 .lab-options button{width:100%;margin:0;min-height:40px;font-size:15px;transform:none;}
+#experimentPanel.chapter2-v3 button:not(.v3-photo-mark)[aria-pressed=true]{background:#ffe09b;color:#233c44;outline:2px solid #e0ac41;box-shadow:0 0 12px #ffd86a80;}
+.v3-mass.is-measured .lab-controls{pointer-events:none;opacity:.65;}
+#experimentPanel.chapter2-v3 .v3-mass .lab-touch{background:#ffe09b;color:#233c44;font-weight:bold;}
+@media(max-width:650px){#experimentPanel.chapter2-v3 .v3-story-choice{width:94vw;bottom:31%;}.v3-story-choice .choice-btn{min-height:64px!important;padding:9px!important;font-size:17px!important;}#experimentPanel.chapter2-v3 .v3-mass{height:83dvh;grid-template-rows:auto 3em minmax(110px,1fr) 240px 44px;padding:10px;}.lab-options button{font-size:12px!important;}.v3-direction{font-size:14px;gap:6px;padding:10px;}#experimentPanel.chapter2-v3 .v3-work{top:55%;max-height:80dvh;}}
+
+/* Illustrated observations and the chapter-three coda. */
+#experimentPanel.chapter2-v3 .v3-landscape-task,
+#experimentPanel.chapter2-v3 .v3-clue:has(.v3-cloud-image){
+ left:50%;right:auto;top:52%;bottom:auto;transform:translate(-50%,-50%);
+ width:min(880px,94vw);max-height:82dvh;overflow:auto;padding:20px;
+}
+.v3-landscape-task figure{margin:0;}
+.v3-landscape-task img,.v3-cloud-image{display:block;width:100%;max-height:43dvh;object-fit:contain;border-radius:8px;}
+.v3-landscape-task figcaption{font-size:14px;margin:8px 0;}
+.v3-landscape-task h3{margin:0 0 12px;}
+.v3-landscape-task p{margin:12px 0;}
+.v3-teaser{position:absolute;inset:0;background:#02070f;overflow:hidden;}
+.v3-teaser img{width:100%;height:100%;object-fit:cover;animation:v3-teaser-reveal 1.6s ease-out;}
+.v3-teaser small{position:absolute;top:14%;left:4%;padding:10px 16px;color:#dbe9e7;background:#071522c9;font-size:18px;}
+@keyframes v3-teaser-reveal{from{filter:brightness(.08)}to{filter:brightness(1)}}
+@media(prefers-reduced-motion:reduce){.v3-teaser img{animation:none;}}
+#experimentPanel.chapter2-v3 .v3-work fieldset>div{display:grid;gap:10px;}
+#experimentPanel.chapter2-v3 .v3-work fieldset button{margin:0;min-height:44px;}
+.v3-photo-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0;}
+.v3-photo-summary span{padding:8px;background:#e8dfc7;border-radius:7px;font-size:14px;}
+.v3-notebook-button{position:absolute;left:2%;bottom:3%;z-index:4;}
+#experimentPanel.chapter2-v3 .v3-notebook{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(620px,92vw);max-height:76dvh;overflow:auto;z-index:20;padding:24px;background:#fff3d5;border:3px solid #967957;border-radius:14px;color:#283e43;}
+.v3-notebook-entry{padding:14px;border-bottom:1px solid #bfa882;font-family:var(--font-story);font-size:20px;}
+.v3-photo-conditions{padding:12px!important;background:#e3ece7;border:1px solid #73918c;border-radius:8px;line-height:1.6;}
+#experimentPanel.chapter2-v3 .mass-apparatus{display:grid;grid-template-rows:minmax(0,1fr) 68px;}
+#experimentPanel.chapter2-v3 .mass-run-slot{display:grid;place-items:center;height:68px;}
+#experimentPanel.chapter2-v3 .mass-run-slot button{position:static;transform:none!important;transition:none!important;animation:none!important;width:240px;max-width:95%;height:46px;margin:0;background:#ffe09b;color:#233c44;}
+#experimentPanel.chapter2-v3 .v3-playback{inset:auto;left:50%;top:12%;transform:translateX(-50%);width:min(780px,84vw);height:auto;max-height:54dvh;grid-template-rows:minmax(0,1fr) auto auto;justify-items:center;overflow:hidden;}
+#experimentPanel.chapter2-v3 .v3-playback .v3-film-frame{width:100%;height:auto;max-height:39dvh;max-width:none;aspect-ratio:370/215;margin:auto;}
+@media(min-width:851px){
+ #experimentPanel.chapter2-v3 .v3-mass{height:min(610px,84dvh);grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);grid-template-rows:auto 3em minmax(0,1fr) 44px;}
+ .v3-mass header,.v3-mass .lab-story,.v3-mass .lab-feedback{grid-column:1/-1;}
+ .v3-mass .lab-apparatus{grid-column:1;grid-row:3;}
+ .v3-mass .lab-controls{grid-column:2;grid-row:3;}
+ #experimentPanel.chapter2-v3 .v3-mass .lab-controls button{font-size:14px;padding:8px;}
+}

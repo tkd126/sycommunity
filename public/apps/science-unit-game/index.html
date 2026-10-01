@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101827">
+  <title>1999년 12월 31일, 우리 학교가 사라진다 - 연습판</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%BC%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css?v=20260910-cartoon-11">
+  <link rel="stylesheet" href="cartoon-ui.css?v=20260910-cartoon-11">
+  <link rel="stylesheet" href="puzzle-ui.css?v=20260910-workbench-12">
+</head>
+<body>
+  <main id="game" aria-live="polite">
+    <div id="stage" class="stage">
+      <div id="background" class="background" aria-hidden="true"></div>
+      <div id="vignette" class="vignette" aria-hidden="true"></div>
+      <div id="scanlines" class="scanlines" aria-hidden="true"></div>
+      <div id="glitch" class="glitch" aria-hidden="true"></div>
+
+      <header id="hud" class="hud hidden">
+        <div class="hud-left">
+          <span id="dateChip" class="chip">2026년 9월 3일</span>
+          <span id="timeChip" class="chip accent">오후 4:44</span>
+        </div>
+        <div class="hud-actions">
+          <button data-fullscreen class="icon-btn" type="button">전체화면</button>
+          <button id="btnLog" class="icon-btn" type="button" aria-label="대화 기록">기록</button>
+          <button id="btnSound" class="icon-btn" type="button" aria-label="소리 켜기 또는 끄기">소리 켬</button>
+          <button data-music-settings class="icon-btn" type="button">음악 설정</button>
+          <button id="btnReset" class="icon-btn danger" type="button">처음부터</button>
+        </div>
+      </header>
+
+      <section id="titleScreen" class="screen title-screen">
+        <div class="title-heading">
+        <p class="eyebrow">그 겨울, 아무도 기억하지 못한 약속</p>
+        <h1><span>1999년 12월 31일,</span><br>우리 학교가 사라진다</h1>
+        <p class="title-copy">과학실 창고에서 발견한 비디오테이프.<br>그 속의 아이는 아직 알려 주지 않은 네 이름을 불렀다.</p>
+        </div>
+        <nav class="title-menu" aria-label="게임 시작 메뉴">
+          <button id="btnNewGame" type="button">새로 시작 <span aria-hidden="true">▷</span></button>
+          <button id="btnContinue" class="hidden" type="button">이어하기 <span aria-hidden="true">▷</span></button>
+          <button id="btnChapters" type="button">장 선택 <span aria-hidden="true">▷</span></button>
+        </nav>
+        <div class="title-settings">
+          <button data-fullscreen class="icon-btn" type="button">전체화면</button>
+          <button data-music-settings class="text-btn" type="button">음악 · 음량 · 출처</button>
+        </div>
+      </section>
+
+      <dialog id="newGameDialog" class="title-dialog" aria-labelledby="newGameHeading">
+        <h2 id="newGameHeading">테이프 속으로</h2>
+        <p>이 이야기에서 너를 뭐라고 부르면 될까?</p>
+        <div class="name-card">
+          <label for="playerName">주인공 이름</label>
+          <input id="playerName" maxlength="8" autocomplete="off" placeholder="예: 지우">
+        </div>
+        <button id="btnStart" class="primary-btn" type="button">테이프 재생하기</button>
+        <p class="title-note">새로 시작하면 기존 진행 기록이 바뀝니다.</p>
+        <button data-close-title type="button">돌아가기</button>
+      </dialog>
+      <dialog id="chapterDialog" class="title-dialog" aria-labelledby="chapterHeading">
+        <h2 id="chapterHeading">어느 기억을 펼칠까?</h2>
+        <p>체험 중에는 기존 저장을 덮어쓰지 않습니다.</p>
+        <label for="previewSection">1편 · 아무도 기억하지 않는 아이</label>
+        <select id="previewSection"><option value="room-return">복도와 방송실 탐색</option><option value="roster-investigate">출석부 조사</option><option value="room-supplies">과학준비실 · 가방과 서랍</option><option value="sand-lab">모래 실험과 배경판 만들기</option><option value="salt-lab">소금·모래 실험과 심화 도전</option></select>
+        <button id="btnRoomPreview" class="text-btn" type="button">선택한 구간 체험하기</button>
+        <label for="previewChapter2">2편 · 날씨와 우리 생활</label>
+        <select id="previewChapter2"><option value="chapter2-start">2편 처음부터 · 운동장</option><option value="c2-preview-prep">방송 준비실 · 메모와 테이프</option><option value="c2-preview-archive">자료실 · 사진 근거 추리</option><option value="c2-preview-weather">기상 관측실 · 쪽지와 벽 지도</option><option value="c2-preview-coast">편집실 · 해안 기록과 마지막 녹음</option></select>
+        <button id="btnChapter2Preview" class="text-btn" type="button">2편 체험하기</button>
+        <p class="title-note">프롤로그 · 1편 혼합물의 분리 · 2편 날씨와 우리 생활<br>체험은 기존 저장을 덮어쓰지 않습니다 · 소리는 첫 클릭 뒤 재생됩니다</p>
+        <button data-close-title type="button">돌아가기</button>
+      </dialog>
+
+      <section id="storyScreen" class="screen story-screen hidden">
+        <div id="sceneLabel" class="scene-label"></div>
+        <div id="propArea" class="prop-area"></div>
+        <div id="characters" class="characters" aria-hidden="true"></div>
+        <div id="choiceArea" class="choice-area"></div>
+        <section id="experimentPanel" class="experiment-panel hidden" aria-label="모래와 자갈 분리 실험"></section>
+        <button id="dialogue" class="dialogue" type="button">
+          <span id="speaker" class="speaker"></span>
+          <span id="line" class="line"></span>
+          <span class="continue-mark">▼</span>
+        </button>
+      </section>
+
+      <section id="endingScreen" class="screen ending-screen hidden">
+        <p id="endingKicker" class="eyebrow">프롤로그 끝</p>
+        <h2 id="endingTitle">아무도 기억하지 않는 아이</h2>
+        <div class="ending-message">
+          <span>남겨진 메시지</span>
+          <p id="endingMessage">방송실로 와. 은호한테는 말하지 마.</p>
+        </div>
+        <p id="endingSummary"></p>
+        <div id="endingBadges" class="ending-badges"></div>
+        <button id="btnChapter1" class="primary-btn" type="button">방송실로 간다</button>
+        <button id="btnReplay" class="text-btn" type="button">프롤로그 처음부터</button>
+        <p id="endingNote" class="ending-note"></p>
+      </section>
+
+      <aside id="logPanel" class="side-panel hidden" aria-label="대화 기록">
+        <div class="panel-head"><b>기록 수첩</b><button id="btnCloseLog" type="button">닫기</button></div>
+        <div id="logList" class="log-list"></div>
+      </aside>
+
+      <dialog id="musicSettings" aria-labelledby="musicHeading">
+        <h2 id="musicHeading">소리 수첩</h2>
+        <label for="volume-music">배경음악 <output id="level-music"></output></label>
+        <input id="volume-music" type="range" min="0" max="100" step="1">
+        <label for="volume-effects">효과음 <output id="level-effects"></output></label>
+        <input id="volume-effects" type="range" min="0" max="100" step="1">
+        <p>음악은 장면에 맞춰 바뀌어요. 다른 탭으로 가면 잠시 쉬어 갑니다. 전체 소리를 껐다면 ‘소리 끔’ 버튼을 눌러 켜 주세요.</p>
+        <div class="music-credits"><b>음악 출처</b>
+          <p><a href="https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100037" target="_blank" rel="noopener">Touching Moments Two - Higher</a><br><a href="https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100164" target="_blank" rel="noopener">Measured Paces</a><br>Kevin MacLeod (incompetech.com)</p>
+          <p>Licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">Creative Commons: By Attribution 4.0</a>.<br>원본 음원 사용 · 게임에서 음량 조절, 반복 재생 및 페이드 적용.</p>
+        </div>
+        <button id="closeMusic" type="button">닫기</button>
+      </dialog>
+      <div id="toast" class="toast" role="status"></div>
+    </div>
+  </main>
+  <script src="character-layout.js"></script>
+  <script src="character-moods.js"></script>
+  <script src="episode-title.js?v=20260908-2"></script>
+  <script src="sieve.js?v=20260909-explore-3"></script>
+  <script src="answer-delay.js?v=20260909-explore-3"></script>
+  <script src="fullscreen.js?v=20260910-ui-10"></script>
+  <script src="salt-workshop.js?v=20260910-ui-10"></script>
+  <script src="liquid-labs.js?v=20260910-lab-9"></script>
+  <script src="room-scene.js?v=20260916-search-1"></script>
+  <script src="room.js?v=20260930-classroom-qa"></script>
+  <script src="clue-book.js?v=20260930-classroom-qa"></script>
+  <script src="choice-dialogue.js?v=20260910-cartoon-11"></script>
+  <script src="foley.js?v=20260911-story-14"></script>
+  <link rel="stylesheet" href="music.css">
+  <script src="bgm.js"></script>
+  <script src="music-ui.js"></script>
+  <link rel="stylesheet" href="chapter2.css?v=20260915-1">
+  <script src="weather-chapter.js?v=20260915-1"></script>
+  <link rel="stylesheet" href="playground.css?v=20260915-6">
+  <link rel="stylesheet" href="evidence-observation.css?v=20260916-2">
+  <script src="activity-clock.js?v=20260915-6"></script>
+  <script src="playground.js?v=20260915-6"></script>
+  <script src="learning-record.js?v=20260916-2"></script>
+  <script src="evidence-task.js?v=20260916-2"></script>
+  <script src="playground-view.js?v=20260916-1"></script>
+  <link rel="stylesheet" href="hana-search.css?v=20260916-search-1">
+  <script src="hana-search.js?v=20260916-search-1"></script>
+  <script src="hana-search-view.js?v=20260916-search-1"></script>
+  <script src="chapter2.js?v=20260916-search-1"></script>
+  <script src="chapter2-weather-story.js"></script>
+  <script src="chapter2-active.js"></script>
+  <script src="chapter2-investigation.js"></script>
+  <script src="chapter2-v3-state.js?v=20260930-classroom-qa"></script>
+  <script src="chapter2-v3-layout.js"></script>
+  <script src="chapter2-interactions.js"></script>
+  <script src="chapter2-v3-view.js"></script>
+  <script src="chapter-access.js?v=20260929-menu-lock"></script>
+  <script src="app.js?v=20260930-classroom-qa"></script>
+  <link rel="stylesheet" href="title-screen.css?v=20260917">
+  <link rel="stylesheet" href="immersive-room.css?v=20260918">
+  <link rel="stylesheet" href="chapter2-v3.css?v=20260921">
+</body>
+</html>

@@ -1,0 +1,45 @@
+/* Shared viewport layout: browser mode and fullscreen use the same scale. */
+:root { --dialogue-height:clamp(155px,23dvh,320px); --cartoon-ink:#343c3e; --cartoon-paper:#fff5dc; }
+#game {height:100dvh;padding:0;background:#152326;}
+.stage {width:100vw;height:100dvh;max-height:none;aspect-ratio:auto;border:0;border-radius:0;box-shadow:none;}
+.character {width:37vw;height:88dvh;bottom:-9%;opacity:1;filter:saturate(.85) brightness(.85) drop-shadow(0 10px 12px #18222655);transform:translateX(-50%) scale(.97);}
+.character.shot-medium {height:82dvh;}
+.character.is-active {filter:saturate(1) brightness(1) drop-shadow(0 12px 14px #18222666);}
+.dialogue {left:2.5%;right:2.5%;bottom:2.5%;padding:clamp(28px,4dvh,58px) 3vw 2.5dvh;border:3px solid #69563d;border-radius:12px 24px 12px 24px;color:var(--cartoon-ink);background:#fff5dff5;box-shadow:inset 0 0 0 4px #fffcf1,0 5px 0 #3f3b31b3;backdrop-filter:none;}
+.dialogue:hover {border-color:#9b723d;}
+.dialogue.thought {color:#34394b;background:#eaeaf6f5;border-color:#686681;}
+.line {max-width:none;font-size:clamp(22px,3dvh,40px);line-height:1.65;text-shadow:none;}
+.speaker {top:-1.1em;font-size:clamp(21px,2.5dvh,36px);border-color:#69563d;box-shadow:2px 3px 0 #69563d;}
+.continue-mark {color:#7b5d2e;font-size:clamp(18px,2.4dvh,30px);}
+.choice-area {width:min(76vw,1200px);bottom:calc(var(--dialogue-height) + 6dvh);gap:1.2dvh;max-height:calc(100% - var(--dialogue-height) - 19dvh);}
+.choice-btn {min-height:7.2dvh;font-size:clamp(20px,2.8dvh,36px);padding:1.3dvh 1.3vw;grid-template-columns:1.6em minmax(0,1fr) 1em;border:2px solid #69563d;border-radius:10px 17px 10px 17px;background:#fff5e2f7;color:#343c3e;box-shadow:0 4px 0 #4e493ab3;}
+.choice-btn:hover,.choice-btn:focus-visible {background:#ffdf91;color:#283639;border-color:#6a4d29;}
+.choice-number {width:1.5em;height:1.5em;font-size:inherit;background:#537477;color:#fff7de;}
+.choice-btn::after {color:#7b5d2e;}
+.hud button,.hud .date,.hud .time {font-size:clamp(14px,1.8dvh,25px);}
+.hud button {background:#fff0d4;color:#344349;border:2px solid #69563d;box-shadow:0 3px 0 #433c32;}
+.hud #btnReset {color:#8c3f34;}
+.experiment-panel:not(.room-panel) {font-size:clamp(16px,2dvh,27px);border:3px solid #a5844f;border-radius:18px;background:#18323c;}
+.experiment-panel:not(.room-panel) button {font-family:var(--font-game);font-size:inherit;background:#fff0d4;color:#344349;border:2px solid #8f754e;box-shadow:0 3px 0 #101f28;}
+.experiment-panel:not(.room-panel) button:hover {background:#f8d58a;}
+.guided-body,.clue-book {max-width:min(86vw,1200px);}
+.clue-book input {margin:12px auto;text-align:center;}
+.clue-paper {border-radius:5px 15px 7px 12px;padding:2dvh 2vw;}
+.room-speech {background:#fff3dff5;color:#344349;border-top:3px solid #947448;}
+.room-speech>b {color:#76562d;}
+.room-speech p {font-size:clamp(15px,1.8dvh,25px);}
+.room-modal-content {width:min(760px,92%);font-size:clamp(16px,2dvh,25px);}
+@media(max-width:650px) {
+  :root {--dialogue-height:clamp(160px,27dvh,260px);}
+  .character {width:62vw;height:75dvh;bottom:-3%;}
+  .character.shot-medium {height:70dvh;}
+  .dialogue {padding:28px 18px 18px;}
+  .choice-area {width:94%;bottom:calc(var(--dialogue-height) + 6dvh);}
+  .choice-btn {font-size:18px;min-height:54px;}
+}
+@media(max-height:500px) and (min-width:651px) {
+  :root {--dialogue-height:110px;}
+  .dialogue {padding:20px 24px 12px;}
+  .line {font-size:16px;line-height:1.4;}
+  .choice-btn {font-size:16px;min-height:40px;padding:5px 10px;}
+}

@@ -1,0 +1,122 @@
+/* Illustrated school workbench. Keep room artwork and its hit regions untouched. */
+.script-field {border:0;margin:16px 0;padding:0;min-width:0;}
+.script-field legend {font-family:var(--font-game);margin-bottom:8px;color:#455c4b;}
+.script-options {display:grid;gap:8px;}
+.script-options label {position:relative;margin:0;cursor:pointer;}
+.script-options input {position:absolute;opacity:0;width:1px;height:1px;}
+.script-options span {display:block;padding:12px 18px;border:2px solid #b4a17b;border-radius:22px;background:#fffaf0;color:#405147;transition:background .15s;}
+.script-options input:checked+span {background:#d9e8d7;border-color:#50776a;box-shadow:inset 0 0 0 2px #fff9;}
+.script-options input:focus-visible+span {outline:3px solid #376e79;outline-offset:2px;}
+.script-options label:hover span {background:#f3e4bf;}
+#roomScript>button {border-radius:22px;}
+.experiment-panel:not(.room-panel) {
+  color:#3d4036;background:#e8d6af;
+  border:9px solid #937044;border-radius:9px;
+  box-shadow:inset 0 0 0 2px #f8e3b2,0 0 0 3px #514633,0 12px 24px #14212588;
+  padding:20px 26px;
+}
+.experiment-panel:not(.room-panel) .lab-heading {margin-bottom:18px;}
+.experiment-panel:not(.room-panel) .lab-heading span,
+.experiment-panel:not(.room-panel) .mission-kicker {
+  display:inline-block;background:#56716b;color:#fff8de;padding:5px 18px;
+  border-radius:3px;box-shadow:0 2px 0 #344d48;font:14px var(--font-game);
+}
+.experiment-panel:not(.room-panel) h2 {color:#3c493f;text-shadow:0 1px #fff7de;font:clamp(24px,3dvh,38px) var(--font-game);}
+.experiment-panel:not(.room-panel) h3 {color:#3d493e;font-family:var(--font-game);}
+.experiment-panel:not(.room-panel) button,
+.room-modal-content button:not(:first-child) {
+  color:#424638;background:#fff8e7;border:2px solid #9c835b;
+  border-radius:3px 9px 4px 7px;box-shadow:0 4px 0 #b7a178;
+  padding:12px 18px;line-height:1.45;transition:background .12s,transform .12s,box-shadow .12s;
+}
+.experiment-panel:not(.room-panel) button:hover,
+.room-modal-content button:not(:first-child):hover {background:#ffe4a6;color:#303e35;border-color:#80643a;transform:translateY(-1px);}
+.experiment-panel:not(.room-panel) button:active,
+.room-modal-content button:not(:first-child):active {transform:translateY(3px);box-shadow:0 1px 0 #b7a178;}
+.experiment-panel button:focus-visible {outline:3px solid #346b75;outline-offset:3px;}
+.experiment-panel:not(.room-panel) input,
+.experiment-panel:not(.room-panel) textarea,
+.experiment-panel:not(.room-panel) select {
+  background:#fffbed;color:#303f36;border:0;border-bottom:3px solid #7c7153;border-radius:2px;
+  box-shadow:0 2px 5px #6b583322;padding:10px 14px;font:inherit;
+}
+.experiment-panel:not(.room-panel) :is(.lab-conversation,.lab-observe,.lab-group,.board-preview,.lab-results,.review-card,.search-intro) {
+  color:#3d4036;background:#fff5dc;border:1px solid #bca67e;box-shadow:2px 3px 0 #baa580;border-radius:4px 10px 4px 7px;
+}
+.experiment-panel:not(.room-panel) :is(.lab-speaker,.lab-observe summary,.lab-group b,.review-reply,.lab-answer-feedback,.lab-safety,.guided-progress,.search-progress,.search-reply) {color:#495b4b;}
+.experiment-panel:not(.room-panel) :is(.lab-conversation,.board-preview,.lab-results,.search-intro) strong {color:#5d5036;}
+.experiment-panel:not(.room-panel) small {color:#5c6558;}
+.experiment-panel:not(.room-panel) button[aria-pressed="true"] {background:#f5d38c;color:#303f36;border-color:#80643a;}
+
+/* The experiment and its question sit on one workbench, not nested navy cards. */
+.experiment-panel.salt-workshop-panel {padding:16px 22px;}
+.salt-workshop-panel .guided-body {gap:10px 28px;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);}
+.salt-workshop-panel .salt-photo {padding:0 0 12px;align-self:center;}
+.salt-workshop-panel .salt-photo-frame {
+  height:auto;max-height:49dvh;width:100%;border:5px solid #fcf5df;border-radius:3px;
+  box-shadow:0 3px 0 #a48c65,0 8px 14px #6b59332b;
+}
+.salt-workshop-panel .salt-photo figcaption {color:#4e5b4b;font-size:clamp(14px,1.8dvh,22px);padding:12px 4px 0;}
+.salt-workshop-panel .salt-decisions {background:transparent;padding:6px 8px 14px;box-shadow:none;border-radius:0;font-size:clamp(16px,2dvh,25px);text-align:left;}
+.salt-workshop-panel .salt-decisions h3 {font-size:clamp(22px,2.6dvh,32px);margin:0 0 14px;padding-bottom:8px;border-bottom:2px solid #b9a77d;}
+.salt-workshop-panel .salt-decisions>p:first-of-type {
+  position:relative;background:#fff9e9;border:2px solid #a28e67;border-radius:18px 18px 18px 3px;
+  margin:0 0 18px;padding:16px 18px 16px 88px;min-height:100px;line-height:1.65;
+}
+.salt-workshop-panel .salt-decisions>p:first-of-type::before {
+  content:"";position:absolute;left:10px;top:12px;width:65px;height:74px;
+  background:#f0deb8 url('assets/characters/somi/normal.png') center 4% / 175% auto no-repeat;
+  border:2px solid #998564;border-radius:50% 50% 42% 42%;
+}
+.salt-workshop-panel .salt-decisions button {text-align:left;min-height:48px;margin:10px 0;padding:12px 16px;}
+.salt-workshop-panel .salt-decisions form {background:#f9edc9;border:1px dashed #aa956b;padding:14px 18px;margin:12px 0;}
+.salt-workshop-panel .salt-decisions form label {margin:0 0 12px;line-height:1.6;}
+.salt-workshop-panel .salt-decisions input {display:block;width:100%;margin-top:8px;}
+.salt-workshop-panel .salt-decisions form button {background:#52766b;color:#fff8e4;border-color:#36574e;box-shadow:0 3px 0 #314f45;text-align:center;}
+.salt-workshop-panel .salt-decisions form button:hover {background:#406659;color:#fff8e4;}
+.salt-workshop-panel .salt-decisions button[data-lab="hint"] {
+  display:inline-block;width:auto;min-height:36px;padding:7px 14px;background:#f3deb0;
+  border:0;border-bottom:2px solid #bba176;box-shadow:none;font-size:.87em;
+}
+.salt-workshop-panel .lab-safety {font-size:12px;line-height:1.5;}
+.salt-workshop-panel .lab-answer-feedback:not(:empty) {padding:10px 15px;background:#fff8e5;border-left:4px solid #648375;border-radius:3px;text-align:left;}
+
+/* A folder of evidence and a paper note inside the opened drawer. */
+.clue-book {max-width:1000px;padding:4px 12px;}
+.clue-book h2 {margin:14px 0 18px;}
+.clue-book .clue-paper {padding-top:12px;padding-bottom:12px;line-height:1.75;}
+.clue-book nav {border-bottom:3px solid #8b795b;padding-left:10px;gap:5px;}
+.experiment-panel .clue-book nav button {border-radius:9px 9px 0 0;border-bottom:0;box-shadow:none;margin:0;padding:10px 22px;background:#d6c39a;}
+.experiment-panel .clue-book nav button[aria-pressed="true"] {background:#fff8e5;}
+.clue-paper {margin-top:0;border:0;border-left:6px solid #c0a578;background:#fff9e9;box-shadow:3px 5px 0 #baa47b;border-radius:0 2px 8px 2px;text-align:left;padding:20px 7%;}
+.clue-book form {display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:14px;background:#f7ebce;border-top:2px solid #b39a70;padding:16px;margin-top:18px;}
+.clue-book input {width:180px;margin:0;}
+.clue-book [role="status"] {text-align:left;line-height:1.65;color:#455647;}
+.room-modal-content {border:7px solid #937044;border-radius:7px;box-shadow:0 0 0 2px #514633,0 12px 30px #0005;background:#fff4d9;color:#3d493e;}
+.room-modal-content h2 {color:#3d493e;}
+@media(max-width:700px) {
+  .experiment-panel:not(.room-panel) {border-width:5px;padding:12px;}
+  .salt-workshop-panel .guided-body {gap:8px;grid-template-columns:minmax(100px,.65fr) minmax(0,1fr);}
+  .salt-workshop-panel .salt-decisions {font-size:14px;padding:2px 4px 10px;}
+  .salt-workshop-panel .salt-decisions>p:first-of-type {padding:12px;min-height:0;}
+  .salt-workshop-panel .salt-decisions>p:first-of-type::before {display:none;}
+  .salt-workshop-panel .salt-decisions h3 {font-size:19px;}
+  .salt-workshop-panel .salt-photo-frame {max-height:35dvh;}
+  .salt-workshop-panel .salt-decisions form {padding:10px;}
+}
+@media(prefers-reduced-motion:reduce) {.experiment-panel button {transition:none;}}
+/* Category labels remain distinguishable without relying on color alone. */
+.duty-categories{width:100%;border-collapse:separate;border-spacing:0 10px;text-align:left;}
+.duty-categories th{width:100px;padding:14px;background:#315961;color:#fff7df;border-radius:12px 0 0 12px;}
+.duty-categories th small{font-size:.72em;font-weight:normal;}
+.duty-categories td{padding:10px;background:#e2eeea;border:1px solid #92ada6;border-radius:0 12px 12px 0;}
+.duty-categories td span{display:inline-block;margin:4px;padding:7px 12px;border-radius:9px;background:#fffdf3;color:#273e40;}
+.duty-categories tr:nth-child(2) th{background:#825d32;}
+.duty-categories tr:nth-child(2) td{background:#f4e2bd;border-color:#bea375;}
+.duty-rule{font-size:.85em;}
+.mission-success>span{display:flex;flex-wrap:wrap;gap:12px;flex:1;}
+.mission-success .success-place{display:flex;align-items:stretch;min-width:220px;flex:1;border:2px solid #759e9d;border-radius:12px;overflow:hidden;background:#edf5ef;color:#273e40;}
+.success-place strong{padding:12px 16px;background:#315961;color:#fff9e9;white-space:nowrap;}
+.mission-success .success-place>span{padding:12px 16px;font-weight:bold;}
+.mission-success .success-bottom{border-color:#c09c5e;background:#fff0ce;}
+.success-bottom strong{background:#825d32;}

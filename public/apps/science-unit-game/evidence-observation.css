@@ -1,0 +1,9 @@
+.evidence-photo-detail{display:block;width:100%;height:210px!important;background-image:url('assets/weather-evidence-cartoon-v1.png')!important;background-size:300% 100%!important;background-position:var(--photo-position) center!important;border:5px solid #fff4d9!important;box-shadow:0 3px 8px #0005;border-radius:4px!important;padding:0!important;position:relative;transition:height .2s;}
+.evidence-photo-detail span{position:absolute;bottom:0;left:0;right:0;background:#172a3be8;color:#fff4d9;font-size:13px;padding:5px;}
+.evidence-photo-detail{height:auto!important;aspect-ratio:1/2;}
+.evidence-photo-detail.is-expanded{height:auto!important;background-size:600% 200%!important;background-position:var(--photo-position) 70%!important;}
+.evidence-work .evidence-sketch{min-height:0;padding:8px;margin-bottom:10px;}
+.response-mode{border:1px solid #ab926a;border-radius:14px;padding:10px;}.response-mode button{margin:5px;}
+.teacher-record{border-top:1px dashed #ac936c;margin-top:22px;padding:12px;}.teacher-record label{display:block;margin:12px 0;}.teacher-record select{margin-left:12px;}.teacher-record textarea{width:100%;box-sizing:border-box;}
+.pg-flying-paper{position:absolute;pointer-events:none;font:clamp(20px,3vw,42px) serif;line-height:1;color:#565546;background:#f8efcf;border:1px solid #746b58;box-shadow:3px 6px 5px #0005;padding:2px 8px;transform:rotate(14deg);z-index:2;}
+@media(prefers-reduced-motion:reduce){.evidence-photo-detail{transition:none}}

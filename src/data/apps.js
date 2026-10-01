@@ -1,5 +1,15 @@
 export const apps = [
   {
+    id: "science-unit-game",
+    title: "1999년 12월 31일, 우리 학교가 사라진다",
+    description:
+      "1999년 학교로 떠나 친구들과 사건을 해결하며 과학을 복습하는 이야기 게임입니다. 1편 혼합물의 분리와 2편 날씨와 우리 생활을 플레이할 수 있습니다.",
+    subject: "과학",
+    grade: "5학년",
+    tags: ["과학 단원 마무리", "혼합물의 분리", "날씨와 우리 생활", "타임슬립", "이야기 게임"],
+    url: "/apps/science-unit-game/",
+  },
+  {
     id: "basic-writing",
     title: "바른 글쓰기 활동지",
     description:

@@ -1,0 +1,68 @@
+/* The artwork and its percentage hit regions occupy the same full viewport.
+   UI floats above them; no second, letterboxed room inside the background. */
+.experiment-panel.room-panel{inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:0!important;padding:0!important}
+.room-panel .room-stage{inset:0!important;display:block;background:transparent;overflow:hidden;container-type:size}
+.room-panel .room-picture{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;max-width:none}
+.room-panel .room-picture>img:first-child{width:100%;height:100%;max-height:none;object-fit:fill;border-radius:0}
+.stage:has(.room-panel:not(.hidden)) .hud{z-index:25;pointer-events:none}
+.stage:has(.room-panel:not(.hidden)) .hud button{pointer-events:auto}
+.room-panel .room-toolbar{position:absolute;top:65px;left:16px;right:auto;width:min(390px,calc(100% - 32px));border:0;border-radius:16px;padding:8px 12px;background:#142a32d9}
+.room-panel .room-toolbar button{white-space:nowrap;flex-shrink:0}
+.room-panel .room-bag{bottom:102px!important;left:auto;right:16px;max-width:calc(100% - 32px);min-height:0!important;padding:7px 10px;border-radius:14px;background:#142a32e8}
+.room-panel .room-speech{left:16px;right:16px;bottom:12px;height:82px!important;padding:10px 105px 10px 16px!important;border:2px solid #94774e;border-radius:20px;background:#fff4dfef;color:#344349;box-shadow:0 4px 0 #392b2566}
+.room-panel .room-speech>b{color:#76562d}
+.room-panel .room-speech p{font-size:clamp(15px,1.8vh,22px);line-height:1.4;margin:5px 0}
+.hana-search-panel .room-speech:has(button){cursor:pointer;user-select:none}
+.room-panel .hana-teacher-link{bottom:22%}
+.room-panel .hana-meeting{bottom:18%;top:12%}
+.room-panel .pg-teacher{bottom:20%}
+.room-panel .room-modal{inset:60px 0 100px!important}
+.hana-search-panel{--explore-dialogue-height:var(--dialogue-height)}
+.playground-panel{--explore-dialogue-height:var(--dialogue-height)}
+.experiment-panel.room-panel.playground-panel{inset:0!important}
+.room-panel.playground-panel .room-speech{left:2.5%;right:2.5%;bottom:2.5%;height:var(--dialogue-height)!important;overflow:visible;padding:32px 3vw 24px!important;border:3px solid #69563d;border-radius:12px 24px;background:#fff5dff5;z-index:10}
+.room-panel.playground-panel .room-speech p{font-size:clamp(18px,2.6dvh,30px);line-height:1.65;max-height:100%;overflow:auto;margin:0}
+.room-panel.playground-panel .room-speech>b{position:absolute;top:-25px;left:24px;padding:7px 22px;border:2px solid #917044;border-radius:9px;background:#f1bc4a;font-size:22px;white-space:nowrap}
+.room-panel.playground-panel .room-toolbar{width:auto;max-width:calc(100% - 32px);flex-wrap:wrap;z-index:12}
+.pg-action-strip{position:absolute;right:2.5%;bottom:calc(var(--dialogue-height) + 5%);width:min(540px,90%);max-height:42%;overflow:auto;box-sizing:border-box;background:#fff3da;color:#344349;border:3px solid #94774e;border-radius:20px;padding:14px 18px;z-index:11}
+.pg-action-strip header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pg-action-strip button{min-height:44px;margin:4px;border-radius:12px;white-space:normal}
+.pg-action-strip p{line-height:1.5;margin:8px 0}
+.room-panel.playground-panel.pg-exploring .room-speech{display:none}
+.pg-explore-hint{flex-basis:100%;max-width:440px;line-height:1.5;color:#fff2d4}
+.pg-inline-actions{position:absolute;bottom:12px;left:3vw;right:180px;display:flex;gap:8px}
+.pg-inline-actions button{border-radius:14px;min-height:40px}
+.pg-fog-bank{position:absolute;left:56%;top:27%;width:23%;height:24%;z-index:0;pointer-events:none;opacity:.58;background:radial-gradient(ellipse at 48% 55%,#edf4f5dd 0 22%,#dce8ec99 43%,#cad8df33 67%,transparent 76%);filter:blur(5px);animation:pg-fog-drift 7s ease-in-out infinite alternate}
+.room-picture:has([data-pg="spot:air"]:hover) .pg-fog-bank,.room-picture:has([data-pg="spot:air"]:focus-visible) .pg-fog-bank{opacity:.78}
+@keyframes pg-fog-drift{from{transform:translateX(-1.5%)}to{transform:translateX(2%)}}
+.pg-weather-answer{position:absolute;left:3vw;right:150px;bottom:10px;display:flex;align-items:center;gap:8px;z-index:4}
+.pg-weather-answer label{font-weight:700;color:#6f542e;white-space:nowrap}
+.pg-weather-answer input{min-width:120px;max-width:260px;min-height:40px;padding:7px 10px;border:2px solid #a58352;border-radius:10px;background:#fffdf5;color:#243840;font:inherit}
+.pg-weather-answer button{min-height:40px;border-radius:10px}
+.room-speech:has(.pg-weather-answer) p{max-height:58px;overflow:auto;padding-right:8px}
+@media(prefers-reduced-motion:reduce){.pg-fog-bank{animation:none}}
+@media(max-width:650px){.pg-weather-answer{left:10px;right:10px;bottom:6px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:5px}.pg-weather-answer label{font-size:12px}.pg-weather-answer input{width:100%;min-width:0}.room-speech:has(.pg-weather-answer) p{max-height:82px}}
+.playground-panel .room-speech>button[data-pg="advance"]{position:absolute;right:20px;bottom:12px;min-height:40px;border-radius:14px}
+.room-panel.playground-panel .room-speech p{max-height:calc(100% - 38px)}
+.room-panel.playground-panel .room-modal{bottom:calc(var(--dialogue-height) + 32px)!important}
+@media(max-height:500px){.room-panel.playground-panel .room-speech{padding:20px 20px 12px!important}.room-panel.playground-panel .room-speech p{font-size:16px}.pg-action-strip{max-height:35%}}
+.room-panel.hana-search-panel .room-speech{left:2.5%;right:2.5%;bottom:2.5%;height:var(--explore-dialogue-height)!important;overflow:visible;padding:clamp(28px,4dvh,58px) 3vw 2.5dvh!important;border:3px solid #69563d;border-radius:12px 24px 12px 24px;background:#fff5dff5;box-shadow:inset 0 0 0 4px #fffcf1,0 5px 0 #3f3b31b3}
+.room-panel.hana-search-panel .room-speech p{font-size:clamp(22px,3dvh,40px);line-height:1.65;margin:0;max-height:100%;overflow:auto;padding-right:45px}
+.room-panel.hana-search-panel .room-speech>b{top:-25px;font-size:22px;line-height:1.2;white-space:nowrap;z-index:4}
+.room-panel.hana-search-panel .room-bag{bottom:calc(var(--explore-dialogue-height) + 38px)!important}
+.room-panel.hana-search-panel .room-modal{bottom:calc(var(--explore-dialogue-height) + 32px)!important}
+.room-panel.hana-search-panel .hana-teacher-link{bottom:calc(var(--explore-dialogue-height) + 110px)}
+@media(max-width:650px){
+ .room-panel .room-stage{overflow:hidden}
+ .room-panel .room-toolbar{top:90px;left:8px;right:8px}
+ .room-panel .room-speech{left:8px;right:8px;height:120px!important;padding:10px 15px 40px!important}
+ .room-panel .room-bag{bottom:140px!important;left:8px;font-size:12px}
+ .room-panel .room-modal{inset:90px 0 145px!important}
+}
+@media(max-width:650px){
+ .room-panel.hana-search-panel .room-speech{padding:28px 18px 18px!important}
+}
+@media(max-height:500px) and (min-width:651px){
+ .room-panel.hana-search-panel .room-speech{padding:20px 24px 12px!important}
+ .room-panel.hana-search-panel .room-speech p{font-size:16px;line-height:1.4}
+}
