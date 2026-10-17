@@ -33,11 +33,11 @@ export const apps = [
     id: "growth-meal-ai",
     title: "성장 한 끼 AI",
     description:
-      "음식 사진을 AI로 분석해 예상 영양소를 확인하고 성장기 한 끼 기준과 비교하는 실과 수업 웹앱입니다.",
+      "음식 사진 또는 텍스트로 예상 영양소를 확인하고 성장기 한 끼 기준과 비교하는 실과 수업 웹앱입니다. 기기별 하루 10회 이용할 수 있습니다.",
     subject: "실과",
     grade: "5학년",
     tags: ["영양", "식생활", "음식", "AI 분석"],
-    url: "https://growth-meal-ai-class.gepro4153.chatgpt.site",
+    url: "https://growth-meal-ai-foodchecker.imsangyun1269.chatgpt.site/",
   },
   {
     id: "summer-vacation-plan",
